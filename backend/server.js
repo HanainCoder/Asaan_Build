@@ -16,9 +16,9 @@ app.get("/", (req, res) => {
 });
 
 
-// -----------------------------------------------------
-// ✅ SAVE PROMPT WITH USER ID
-// -----------------------------------------------------
+
+//  SAVE PROMPT WITH USER ID
+
 app.post("/api/savePrompt", async (req, res) => {
   const { userId, prompt } = req.body;
 
@@ -40,9 +40,9 @@ app.post("/api/savePrompt", async (req, res) => {
 });
 
 
-// -----------------------------------------------------
-// ✅ REGISTER USER
-// -----------------------------------------------------
+
+//  REGISTER USER
+
 app.post("/api/register", async (req, res) => {
   const { email, password } = req.body;
 
@@ -70,9 +70,9 @@ app.post("/api/register", async (req, res) => {
 });
 
 
-// -----------------------------------------------------
-// ✅ LOGIN USER
-// -----------------------------------------------------
+
+//  LOGIN USER
+
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
 
