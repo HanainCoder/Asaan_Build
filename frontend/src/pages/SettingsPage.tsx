@@ -133,119 +133,149 @@ export function SettingsPage() {
 
               {/* Interface Preferences */}
               <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <div className="flex items-center gap-3 mb-6">
-                  <Moon className="size-5 text-gray-600" />
-                  <h2>{t('interfacePreferences')}</h2>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {darkMode ? (
-                        <Moon className="size-5 text-gray-700" />
-                      ) : (
-                        <Sun className="size-5 text-gray-700" />
-                      )}
-                      <div>
-                        <p>Dark Mode</p>
-                        <p className="text-sm text-gray-600">
-                          Use dark theme across the app
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setDarkMode(!darkMode)}
-                      className={`relative w-14 h-7 rounded-full transition-colors ${
-                        darkMode ? 'bg-blue-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-0.5 left-0.5 size-6 bg-white rounded-full transition-transform ${
-                          darkMode ? 'translate-x-7' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
+  <div className="flex items-center gap-3 mb-6">
+    <Moon className="size-5 text-gray-600" />
+    <h2>{t('interfacePreferences')}</h2>
+  </div>
+
+  <div className="space-y-4">
+    {/* ROW */}
+    <div
+      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg 
+                 hover:bg-gray-100 transition-colors cursor-pointer"
+      onClick={() => setDarkMode(!darkMode)}
+    >
+      <div className="flex items-center gap-3">
+        {darkMode ? (
+          <Moon className="size-5 text-gray-700" />
+        ) : (
+          <Sun className="size-5 text-gray-700" />
+        )}
+        <div>
+          <p>Dark Mode</p>
+          <p className="text-sm text-gray-600">
+            Use dark theme across the app
+          </p>
+        </div>
+      </div>
+
+      {/* TOGGLE BUTTON */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // prevent double toggle
+          setDarkMode(!darkMode);
+        }}
+        className={`relative w-14 h-7 rounded-full transition-all 
+                    ${darkMode ? 'bg-blue-600' : 'bg-gray-300'}
+                    hover:brightness-110 active:scale-95`}
+      >
+        {/* Toggle knob */}
+        <div
+          className={`absolute top-0.5 left-0.5 size-6 bg-white rounded-full 
+                      shadow-md transition-transform duration-300 
+                      ${darkMode ? 'translate-x-7' : 'translate-x-0'}
+                      hover:scale-105`}
+        />
+      </button>
+    </div>
+  </div>
+</div>
+
 
               {/* Notification Settings */}
               <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                <div className="flex items-center gap-3 mb-6">
-                  <Bell className="size-5 text-gray-600" />
-                  <h2>{t('notifications')}</h2>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p>Email Notifications</p>
-                      <p className="text-sm text-gray-600">
-                        Receive updates via email
-                      </p>
-                    </div>
-                    <button
-                      onClick={() =>
-                        setNotifications({ ...notifications, email: !notifications.email })
-                      }
-                      className={`relative w-14 h-7 rounded-full transition-colors ${
-                        notifications.email ? 'bg-blue-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-0.5 left-0.5 size-6 bg-white rounded-full transition-transform ${
-                          notifications.email ? 'translate-x-7' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p>Push Notifications</p>
-                      <p className="text-sm text-gray-600">
-                        Receive push notifications
-                      </p>
-                    </div>
-                    <button
-                      onClick={() =>
-                        setNotifications({ ...notifications, push: !notifications.push })
-                      }
-                      className={`relative w-14 h-7 rounded-full transition-colors ${
-                        notifications.push ? 'bg-blue-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-0.5 left-0.5 size-6 bg-white rounded-full transition-transform ${
-                          notifications.push ? 'translate-x-7' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p>Product Updates</p>
-                      <p className="text-sm text-gray-600">
-                        Get notified about new features
-                      </p>
-                    </div>
-                    <button
-                      onClick={() =>
-                        setNotifications({
-                          ...notifications,
-                          updates: !notifications.updates,
-                        })
-                      }
-                      className={`relative w-14 h-7 rounded-full transition-colors ${
-                        notifications.updates ? 'bg-blue-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-0.5 left-0.5 size-6 bg-white rounded-full transition-transform ${
-                          notifications.updates ? 'translate-x-7' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
+  <div className="flex items-center gap-3 mb-6">
+    <Bell className="size-5 text-gray-600" />
+    <h2>{t('notifications')}</h2>
+  </div>
+
+  <div className="space-y-4">
+
+    {/* Email Notifications */}
+    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg transition-all hover:bg-gray-100 hover:shadow-sm">
+      <div>
+        <p>Email Notifications</p>
+        <p className="text-sm text-gray-600">Receive updates via email</p>
+      </div>
+
+      <button
+        onClick={() =>
+          setNotifications({ ...notifications, email: !notifications.email })
+        }
+        className={`relative w-14 h-7 rounded-full transition-all 
+          ${notifications.email ? 'bg-blue-600' : 'bg-gray-300'} 
+          hover:${notifications.email ? 'bg-blue-700' : 'bg-gray-400'}
+          hover:shadow-md hover:scale-105
+        `}
+      >
+        <div
+          className={`absolute top-0.5 left-0.5 size-6 bg-white rounded-full transition-all
+            ${notifications.email ? 'translate-x-7' : 'translate-x-0'} 
+            group-hover:scale-110
+            hover:scale-110 shadow-sm
+          `}
+        />
+      </button>
+    </div>
+
+    {/* Push Notifications */}
+    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg transition-all hover:bg-gray-100 hover:shadow-sm">
+      <div>
+        <p>Push Notifications</p>
+        <p className="text-sm text-gray-600">Receive push notifications</p>
+      </div>
+
+      <button
+        onClick={() =>
+          setNotifications({ ...notifications, push: !notifications.push })
+        }
+        className={`relative w-14 h-7 rounded-full transition-all 
+          ${notifications.push ? 'bg-blue-600' : 'bg-gray-300'} 
+          hover:${notifications.push ? 'bg-blue-700' : 'bg-gray-400'}
+          hover:shadow-md hover:scale-105
+        `}
+      >
+        <div
+          className={`absolute top-0.5 left-0.5 size-6 bg-white rounded-full transition-all
+            ${notifications.push ? 'translate-x-7' : 'translate-x-0'} 
+            hover:scale-110 shadow-sm
+          `}
+        />
+      </button>
+    </div>
+
+    {/* Product Updates */}
+    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg transition-all hover:bg-gray-100 hover:shadow-sm">
+      <div>
+        <p>Product Updates</p>
+        <p className="text-sm text-gray-600">Get notified about new features</p>
+      </div>
+
+      <button
+        onClick={() =>
+          setNotifications({
+            ...notifications,
+            updates: !notifications.updates,
+          })
+        }
+        className={`relative w-14 h-7 rounded-full transition-all 
+          ${notifications.updates ? 'bg-blue-600' : 'bg-gray-300'} 
+          hover:${notifications.updates ? 'bg-blue-700' : 'bg-gray-400'}
+          hover:shadow-md hover:scale-105
+        `}
+      >
+        <div
+          className={`absolute top-0.5 left-0.5 size-6 bg-white rounded-full transition-all
+            ${notifications.updates ? 'translate-x-7' : 'translate-x-0'} 
+            hover:scale-110 shadow-sm
+          `}
+        />
+      </button>
+    </div>
+
+  </div>
+</div>
+
             </div>
           </div>
         </main>

@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   X,
+  Blocks
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,6 +27,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
     { icon: PlusCircle, label: t('createNewApp'), path: '/prompt' },
     { icon: FolderKanban, label: t('myProjects'), path: '/projects' },
+    // { icon: Blocks, label: t('templateHub'), path: '/templates' },
     { icon: Settings, label: t('settings'), path: '/settings' },
   ];
 

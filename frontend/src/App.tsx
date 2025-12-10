@@ -15,6 +15,7 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SupportPage } from './pages/SupportPage';
 
+
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -75,6 +76,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+     
       <Route
         path="/code/:id"
         element={

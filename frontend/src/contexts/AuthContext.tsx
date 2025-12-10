@@ -7,7 +7,7 @@ interface User {
   avatar?: string;
 }
 
-interface AuthContextType {
+interface AuthContextType { 
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;

@@ -2,19 +2,22 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Github, Mail, Lock, Sparkles } from 'lucide-react';
+import { Github, Mail, Lock, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 
 export function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); //  error message state
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const [showPassword, setShowPassword] = useState(false); // 👁️ NEW
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); //  NEW
 
   const { register } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  // 🔍 Validation Regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
@@ -22,24 +25,23 @@ export function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    //  Email validation
     if (!emailRegex.test(email)) {
       return setError("Invalid email format. Example: user@example.com");
     }
 
-    //  Password validation
     if (!passwordRegex.test(password)) {
       return setError(
-        "Password must be at least 8 characters, include uppercase, lowercase and a number."
+        "Password must be at least 8 characters long, include uppercase, lowercase and a number."
       );
+    }
+
+    if (password !== confirmPassword) {
+      return setError("Passwords do not match.");
     }
 
     try {
       await register(email, password);
-
-      // After register → Go to login page
       navigate('/login');
-
     } catch (err: any) {
       setError(err.message || "Registration failed. Try again.");
     }
@@ -107,6 +109,7 @@ export function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+
             {/* Email */}
             <div>
               <label htmlFor="email" className="block mb-2 text-gray-700">
@@ -119,7 +122,8 @@ export function RegisterPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg 
+                             focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                   placeholder="your@email.com"
                   required
                 />
@@ -133,21 +137,67 @@ export function RegisterPage() {
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg 
+                             focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                   placeholder="••••••••"
                   required
                 />
+
+                {/*  Toggle */}
+                <button
+  type="button"
+  onClick={() => setShowPassword(!showPassword)}
+  className="absolute right-3 top-1/2 -translate-y-1/2 p-0 bg-transparent border-none outline-none hover:bg-transparent focus:ring-0 focus:outline-none"
+>
+  {showPassword ? (
+    <EyeOff size={20} className="text-gray-500" />
+  ) : (
+    <Eye size={20} className="text-gray-500" />
+  )}
+</button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label htmlFor="confirmPassword" className="block mb-2 text-gray-700">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg 
+                             focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  placeholder="••••••••"
+                  required
+                />
+
+                {/*  Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 bg-blue-100"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-shadow"
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg 
+                         hover:shadow-lg transition-shadow"
             >
               {t('signUp')}
             </button>
