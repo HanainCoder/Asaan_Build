@@ -84,38 +84,44 @@ export const templates = [
 export const projects = [
   {
     id: 1,
-    name: 'My E-commerce Store',
-    date: 'Nov 15, 2025',
-    status: 'Active',
+    name: "E-Commerce Store",
+    date: "Nov 10, 2025",
+    status: "Active",
+    thumbnail: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
   },
   {
     id: 2,
-    name: 'Portfolio Website',
-    date: 'Nov 10, 2025',
-    status: 'Active',
+    name: "Portfolio Website",
+    date: "Sep 05, 2025",
+    status: "Draft",
+    thumbnail: "https://images.unsplash.com/photo-1508780709619-79562169bc64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
   },
   {
     id: 3,
-    name: 'Restaurant Menu App',
-    date: 'Nov 5, 2025',
-    status: 'Draft',
+    name: "Restaurant Menu App",
+    date: "Dec 01, 2025",
+    status: "Completed",
+    thumbnail: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
   },
   {
     id: 4,
-    name: 'Learning Platform',
-    date: 'Oct 28, 2025',
-    status: 'Active',
+    name: "Learning Platform",
+    date: "Dec 09, 2025",
+    status: "Active",
+    thumbnail: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
   },
   {
     id: 5,
-    name: 'Blog Website',
-    date: 'Oct 20, 2025',
-    status: 'Active',
+    name: "Blog Website",
+    date: "Dec 11, 2025",
+    status: "Active",
+    thumbnail: "https://images.unsplash.com/photo-1507537297725-24a1c029d3ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
   },
   {
     id: 6,
-    name: 'Business Website',
-    date: 'Oct 15, 2025',
-    status: 'Draft',
-  },
+    name: "Business Website",
+    date: "Dec 10, 2025",
+    status: "Completed",
+    thumbnail: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+  }
 ];

@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
 import { ProjectCard } from '../components/ProjectCard';
-import { projects } from '@/data/templates';
+import { projects as initialProjects } from '@/data/templates';
 import { Search, Grid, List } from 'lucide-react';
 
 export function ProjectsPage() {
@@ -14,9 +14,58 @@ export function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const filteredProjects = projects.filter((project) =>
+  // PROJECTS IN STATE
+  const [projectList, setProjectList] = useState(initialProjects);
+
+  const filteredProjects = projectList.filter((project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+
+  // DELETE CONFIRMATION MODAL
+
+  const [deleteProjectId, setDeleteProjectId] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDelete = () => {
+    if (deleteProjectId === null) return;
+
+    setProjectList((prev) => prev.filter((p) => p.id !== deleteProjectId));
+
+    setShowDeleteModal(false);
+    setDeleteProjectId(null);
+  };
+
+ 
+  // DUPLICATE
+  
+  const handleDuplicate = (projectId: number) => {
+    setProjectList((prev) => {
+      const original = prev.find((p) => p.id === projectId);
+      if (!original) return prev;
+
+      const newProject = {
+        ...original,
+        id: Date.now(),
+        name: original.name + " (Copy)",
+        date: new Date().toDateString(),
+      };
+
+      return [...prev, newProject];
+    });
+  };
+
+
+  // RENAME
+  
+  const handleRename = (projectId: number, newName: string) => {
+    if (!newName || newName.trim() === "") return;
+    setProjectList((prev) =>
+      prev.map((p) =>
+        p.id === projectId ? { ...p, name: newName.trim() } : p
+      )
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-317">
@@ -25,6 +74,7 @@ export function ProjectsPage() {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main className="flex-1 p-6 lg:p-8">
           <div className="w-full">
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
               <div>
@@ -41,7 +91,7 @@ export function ProjectsPage() {
               </button>
             </div>
 
-            {/* Search and Filter */}
+            {/* Search */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
@@ -61,7 +111,6 @@ export function ProjectsPage() {
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
-                  aria-label="Grid view"
                 >
                   <Grid className="size-5" />
                 </button>
@@ -72,14 +121,13 @@ export function ProjectsPage() {
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
-                  aria-label="List view"
                 >
                   <List className="size-5" />
                 </button>
               </div>
             </div>
 
-            {/* Projects Grid/List */}
+            {/* Projects Grid */}
             {viewMode === 'grid' ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProjects.map((project) => (
@@ -88,10 +136,14 @@ export function ProjectsPage() {
                     name={project.name}
                     date={project.date}
                     status={project.status}
+                    thumbnail={project.thumbnail}
                     onOpen={() => navigate('/dashboard')}
-                    onRename={() => {}}
-                    onDuplicate={() => {}}
-                    onDelete={() => {}}
+                    onRename={(newName) => handleRename(project.id, newName)}
+                    onDuplicate={() => handleDuplicate(project.id)}
+                    onDelete={() => {
+                      setDeleteProjectId(project.id);
+                      setShowDeleteModal(true);
+                    }}
                   />
                 ))}
               </div>
@@ -108,7 +160,9 @@ export function ProjectsPage() {
                   </thead>
                   <tbody className="divide-y">
                     {filteredProjects.map((project) => (
-                      <tr key={project.id} className="hover:bg-gray-50">
+                      <tr key={project.id} className="transition-all duration-300 cursor-pointer
+             hover:bg-gray-50 hover:shadow-sm hover:-translate-y-[2px]
+             hover:border-l-4 hover:border-blue-500">
                         <td className="px-6 py-4">{project.name}</td>
                         <td className="px-6 py-4 text-gray-600">{project.date}</td>
                         <td className="px-6 py-4">
@@ -137,6 +191,7 @@ export function ProjectsPage() {
               </div>
             )}
 
+            {/* Empty state */}
             {filteredProjects.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                 <p className="text-gray-500 mb-4">No projects found</p>
@@ -149,26 +204,35 @@ export function ProjectsPage() {
               </div>
             )}
 
-            {/* Pagination */}
-            {filteredProjects.length > 0 && (
-              <div className="mt-8 flex items-center justify-center gap-2">
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
-                  Previous
-                </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                  1
-                </button>
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                  2
-                </button>
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                  3
-                </button>
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                  Next
-                </button>
+            {/* DELETE confirm MODAL */}
+            {showDeleteModal && (
+              <div className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="bg-white rounded-xl shadow-lg p-6 w-96">
+                  
+                  <h2 className="text-xl font-semibold mb-4">Delete Project?</h2>
+                  <p className="text-gray-600 mb-6">
+                    Are you sure you want to delete this project? This action cannot be undone.
+                  </p>
+
+                  <div className="flex justify-end gap-4">
+                    <button
+                      onClick={() => setShowDeleteModal(false)}
+                      className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      onClick={handleDelete}
+                      className="px-4 py-2 rounded-lg bg-red-600 text-black hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
+
           </div>
         </main>
       </div>

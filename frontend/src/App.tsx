@@ -14,6 +14,7 @@ import { CodeViewerPage } from './pages/CodeViewerPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SupportPage } from './pages/SupportPage';
+import { VersionControlPage } from './pages/VersionControlPage';
 
 
 // Protected route wrapper
@@ -106,6 +107,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SupportPage />
+          </ProtectedRoute>
+        }
+      />
+      {/*  */}
+      <Route
+        path="/version"
+        element={
+          <ProtectedRoute>
+            <VersionControlPage />
           </ProtectedRoute>
         }
       />

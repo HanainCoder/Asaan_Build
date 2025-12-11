@@ -20,43 +20,44 @@ export function SupportPage() {
   const [message, setMessage] = useState('');
 
   const faqs = [
-    {
-      id: 1,
-      question: 'How do I create my first app?',
-      answer:
-        'Navigate to the "Create New App" section, describe your app idea in English or Urdu, and our AI will generate a custom template for you. You can then preview, customize, and deploy your app.',
-    },
-    {
-      id: 2,
-      question: 'Can I use Urdu for app generation?',
-      answer:
-        'Yes! AsaanBuild supports full Urdu input with RTL (Right-to-Left) support. You can describe your app in Urdu, Roman Urdu, or English.',
-    },
-    {
-      id: 3,
-      question: 'What technologies are used?',
-      answer:
-        'We use React for frontend, Node.js/Express for backend, and PostgreSQL for database. All generated code is production-ready and follows industry best practices.',
-    },
-    {
-      id: 4,
-      question: 'Can I export my code?',
-      answer:
-        'Absolutely! You can download your complete source code as a ZIP file or export directly to GitHub. You own all the code we generate.',
-    },
-    {
-      id: 5,
-      question: 'Is there a limit to how many apps I can create?',
-      answer:
-        'The number of apps you can create depends on your subscription plan. Free users can create up to 3 apps, while premium users have unlimited access.',
-    },
-    {
-      id: 6,
-      question: 'How do I deploy my generated app?',
-      answer:
-        'After generating your app, you can download the code and deploy it to platforms like Vercel, Netlify, or AWS. We also provide deployment guides in the documentation.',
-    },
-  ];
+  {
+    id: 1,
+    question: 'Apna pehla app kaise banao?',
+    answer:
+      '“Create New App” section mein jao, apni app ka idea English, Urdu ya Roman Urdu mein likho. Hamara AI aap ke liye custom template generate karega. Aap usay preview, customize aur deploy kar sakte hain.',
+  },
+  {
+    id: 2,
+    question: 'Kya main Urdu mein app generate kar sakta hoon?',
+    answer:
+      'Ji haan! AsaanBuild poori tarah Urdu, Roman Urdu aur English support karta hai. Aap apni app ka idea kisi bhi zubaan mein de sakte hain.',
+  },
+  {
+    id: 3,
+    question: 'AsaanBuild kin technologies ka istemaal karta hai?',
+    answer:
+      'Frontend ke liye React, backend ke liye Node.js/Express aur database ke liye PostgreSQL use hota hai. Saara generated code industry best practices par based hota hai.',
+  },
+  {
+    id: 4,
+    question: 'Kya main apna code export kar sakta hoon?',
+    answer:
+      'Bilkul! Aap pura source code ZIP file ki form mein download kar sakte hain ya seedha GitHub par export kar sakte hain. Generated code par poora haq aapka hota hai.',
+  },
+  {
+    id: 5,
+    question: 'Kya main unlimited apps bana sakta hoon?',
+    answer:
+      'Yeh aapke subscription plan par depend karta hai. Free users 3 apps bana sakte hain, jabke premium users unlimited apps create kar sakte hain.',
+  },
+  {
+    id: 6,
+    question: 'Apni generated app ko deploy kaise karun?',
+    answer:
+      'App generate karne ke baad aap code download karke Vercel, Netlify, ya AWS par deploy kar sakte hain. Hum documentation mein complete deployment guides bhi dete hain.',
+  },
+];
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +66,7 @@ export function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 w-317">
       <Header onMenuClick={() => setSidebarOpen(true)} showMenu />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
