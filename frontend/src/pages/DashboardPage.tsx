@@ -43,7 +43,9 @@ export function DashboardPage() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 group">
+              <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+
               <StatCard
                 title={t('totalProjects')}
                 value="12"
@@ -51,6 +53,8 @@ export function DashboardPage() {
                 trend="+3 this month"
                 color="blue"
               />
+              </div>
+              <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
               <StatCard
                 title="Active Apps"
                 value="8"
@@ -58,6 +62,8 @@ export function DashboardPage() {
                 trend="+2 this week"
                 color="green"
               />
+              </div>
+               <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
               <StatCard
                 title="Templates Used"
                 value="15"
@@ -65,6 +71,8 @@ export function DashboardPage() {
                 trend="+5 this month"
                 color="purple"
               />
+              </div>
+               <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
               <StatCard
                 title="Hours Saved"
                 value="47"
@@ -72,6 +80,7 @@ export function DashboardPage() {
                 trend="+12 this month"
                 color="orange"
               />
+              </div>
               
             </div>
 
