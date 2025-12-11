@@ -11,7 +11,7 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const [showPassword, setShowPassword] = useState(false); // 👁️ NEW
+  const [showPassword, setShowPassword] = useState(false); //  NEW
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); //  NEW
 
   const { register } = useAuth();
@@ -51,7 +51,7 @@ export function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
 
-        {/* Left UI */}
+        {/* left UI */}
         <div className="hidden lg:block">
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl blur-3xl" />
@@ -149,7 +149,7 @@ export function RegisterPage() {
                   required
                 />
 
-                {/*  Toggle */}
+                {/*  toggle */}
                 <button
   type="button"
   onClick={() => setShowPassword(!showPassword)}

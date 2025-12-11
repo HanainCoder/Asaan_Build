@@ -26,7 +26,7 @@ export function LoginPage() {
       const msg = err.message || "Login failed";
       setError(msg);
 
-      // ⭐ If user is not found → go to Register Page
+      //  If user is not found → go to Register Page
       if (msg.toLowerCase().includes("user not found")) {
         setTimeout(() => {
           navigate('/register');
@@ -39,7 +39,7 @@ export function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
 
-        {/* LEFT SIDE */}
+        {/* left side */}
         <div className="hidden lg:block">
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl blur-3xl" />
@@ -50,8 +50,7 @@ export function LoginPage() {
             />
           </div>
         </div>
-
-        {/* RIGHT SIDE */}
+{/* right side */}
         <div className="bg-white rounded-3xl shadow-xl p-8 lg:p-12">
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
@@ -76,7 +75,7 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* EMAIL */}
+            {/* email */}
             <div>
               <label className="block mb-2 text-gray-700">{t('email')}</label>
               <div className="relative">
@@ -103,7 +102,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-12 py-3 border border-gray-400 rounded-lg 
-                 bg-[#e7f0fe]   /* 🌟 light sky blue background */
+                 bg-[#e7f0fe]   /*  light sky blue background */
                  focus:ring-2 focus:ring-blue-600"
                   placeholder="••••••••"
                   required
@@ -131,7 +130,7 @@ export function LoginPage() {
             </button>
           </form>
 
-          {/* REGISTER LINK */}
+          {/* register */}
           <p className="mt-8 text-center text-gray-600">
             {t('dontHaveAccount')}{' '}
             <button onClick={() => navigate('/register')} className="text-blue-600 hover:underline">

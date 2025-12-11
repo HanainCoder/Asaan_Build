@@ -45,9 +45,9 @@ export function PromptPage() {
     }
   };
 
-  // ------------------------------------------------------
+  
   //   SAVE PROMPT FUNCTION
-  // ------------------------------------------------------
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
