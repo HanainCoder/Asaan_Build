@@ -48,35 +48,45 @@ export function PromptPage() {
   
   //   SAVE PROMPT FUNCTION
  
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!prompt.trim()) return;
-
-    if (!user) {
-      alert("You must be logged in to save prompts!");
-      return;
-    }
+    if (!user) return alert("You must be logged in to save prompts!");
 
     try {
-      const response = await fetch("http://localhost:5000/api/savePrompt", {
+      // 1️⃣ Prepare structured prompt
+      const prepareRes = await fetch("http://localhost:5000/api/preparePrompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      const prepareData = await prepareRes.json();
+      if (!prepareData.success) throw new Error("Failed to prepare structured prompt");
+
+      console.log("Structured Prompt ready:", prepareData.structuredPrompt);
+
+      // 2️⃣ Save original + structured prompt
+      const saveRes = await fetch("http://localhost:5000/api/savePrompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: user.id,   // ✅ REAL USER ID — FIXED
+          userId: user.id,
           prompt,
+          structuredPrompt: prepareData.structuredPrompt,
         }),
       });
 
-      const data = await response.json();
-      console.log("Saved prompt:", data);
+      const saveData = await saveRes.json();
+      console.log("Saved prompt:", saveData);
 
+      // 3️⃣ Navigate to templates page
       navigate("/templates");
 
     } catch (err) {
       console.error("Error submitting prompt:", err);
     }
   };
+
 
   const useExample = (example: string) => {
     setPrompt(example);

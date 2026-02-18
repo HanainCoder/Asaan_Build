@@ -10,17 +10,42 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// TEST
+// Test
 app.get("/", (req, res) => {
   res.send("Backend is running...");
 });
 
+//prepare prompt
+// Prepare structured long prompt
+app.post("/api/preparePrompt", async (req, res) => {
+  const { prompt } = req.body;
+
+  if (!prompt) return res.status(400).json({ success: false, message: "Prompt required" });
+
+  const structuredPrompt = `
+You are an expert full-stack web developer.
+
+User idea:
+"${prompt}"
+
+Task:
+1. Understand what the user wants.
+2. Assume standard features for this type of app if not specified.
+3. Generate a detailed structured JSON including frontend, backend, and database.
+4. Frontend: pages, components, styling (Tailwind CSS)
+5. Backend: API routes, auth (JWT), logic
+6. Database: tables and fields
+7. Respond ONLY in valid JSON.
+`;
+
+  res.json({ success: true, structuredPrompt });
+});
 
 
 //  save prompt with user ID.
 
 app.post("/api/savePrompt", async (req, res) => {
-  const { userId, prompt } = req.body;
+  const { userId, prompt, structuredPrompt } = req.body;
 
   if (!userId || !prompt) {
     return res.status(400).json({ success: false, message: "userId and prompt are required" });
@@ -28,8 +53,8 @@ app.post("/api/savePrompt", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "INSERT INTO prompts (user_id, prompt_text) VALUES ($1, $2) RETURNING *",
-      [userId, prompt]
+      "INSERT INTO prompts (user_id, prompt_text, structured_prompt) VALUES ($1, $2, $3) RETURNING *",
+      [userId, prompt, structuredPrompt || null]
     );
 
     res.json({ success: true, data: result.rows[0] });
@@ -38,6 +63,9 @@ app.post("/api/savePrompt", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+
+
+
 
 
 

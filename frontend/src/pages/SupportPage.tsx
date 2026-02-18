@@ -64,7 +64,7 @@ export function SupportPage() {
     setMessage('');
     alert('Thank you for your message! Our support team will get back to you soon.');
   };
-
+//ui 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-317">
       <Header onMenuClick={() => setSidebarOpen(true)} showMenu />
