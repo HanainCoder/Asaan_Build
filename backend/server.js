@@ -3,8 +3,14 @@ import cors from "cors";
 import { pool } from "./db.js";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
-
 dotenv.config();
+import OpenAI from "openai";
+
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+//for  open ai  
+
+// open ai
+
 
 const app = express();
 app.use(cors());
@@ -17,53 +23,103 @@ app.get("/", (req, res) => {
 
 //prepare prompt
 // Prepare structured long prompt
-app.post("/api/preparePrompt", async (req, res) => {
-  const { prompt } = req.body;
+// app.post("/api/preparePrompt", async (req, res) => {
+//   const { prompt } = req.body;
 
-  if (!prompt) return res.status(400).json({ success: false, message: "Prompt required" });
+//   if (!prompt) return res.status(400).json({ success: false, message: "Prompt required" });
 
-  const structuredPrompt = `
-You are an expert full-stack web developer.
+//   const structuredPrompt = `
+// You are an expert full-stack web developer.
 
-User idea:
-"${prompt}"
+// User idea:
+// "${prompt}"
 
-Task:
-1. Understand what the user wants.
-2. Assume standard features for this type of app if not specified.
-3. Generate a detailed structured JSON including frontend, backend, and database.
-4. Frontend: pages, components, styling (Tailwind CSS)
-5. Backend: API routes, auth (JWT), logic
-6. Database: tables and fields
-7. Respond ONLY in valid JSON.
-`;
+// Task:
+// 1. Understand what the user wants.
+// 2. Assume standard features for this type of app if not specified.
+// 3. Generate a detailed structured JSON including frontend, backend, and database.
+// 4. Frontend: pages, components, styling (Tailwind CSS)
+// 5. Backend: API routes, auth (JWT), logic
+// 6. Database: tables and fields
+// 7. Respond ONLY in valid JSON.
+// `;
 
-  res.json({ success: true, structuredPrompt });
-});
+//   res.json({ success: true, structuredPrompt });
+// });
 
 
 //  save prompt with user ID.
 
-app.post("/api/savePrompt", async (req, res) => {
-  const { userId, prompt, structuredPrompt } = req.body;
+// app.post("/api/savePrompt", async (req, res) => {
+//   const { userId, prompt, structuredPrompt } = req.body;
 
-  if (!userId || !prompt) {
-    return res.status(400).json({ success: false, message: "userId and prompt are required" });
-  }
+//   if (!userId || !prompt) {
+//     return res.status(400).json({ success: false, message: "userId and prompt are required" });
+//   }
+
+//   try {
+//     const result = await pool.query(
+//       "INSERT INTO prompts (user_id, prompt_text, structured_prompt) VALUES ($1, $2, $3) RETURNING *",
+//       [userId, prompt, structuredPrompt || null]
+//     );
+
+//     res.json({ success: true, data: result.rows[0] });
+//   } catch (err) {
+//     console.error("DB Error:", err);
+//     res.status(500).json({ success: false, message: "Database error" });
+//   }
+// });
+//ai COding
+
+// Streaming landing page generation
+// Streaming landing page generation (HTML + CSS)
+// Streaming landing page generation (HTML + CSS in one file)
+app.post("/api/generateLandingStream", async (req, res) => {
+  const { prompt } = req.body;
+  if (!prompt) return res.status(400).json({ error: "Prompt required" });
+
+  const fullPrompt = `
+You are an AI web developer. Generate a **complete HTML landing page** for this request:
+"${prompt}"
+
+- Include all CSS inside a <style> tag in the HTML (no separate files).
+- Respond line by line as if streaming.
+- Include 2 sections.
+- Make it responsive and visually structured.
+- Use modern fonts (Google Fonts) and consistent color themes.
+- Use pleasant spacing, padding, margins, and card layouts.
+- Include hero images and placeholder images.
+- Use buttons with hover effects.
+- Add simple CSS animations/transitions.
+- For Urdu prompts, generate placeholder text in Urdu where appropriate.
+- Do NOT ask any questions. Output the complete code directly.
+`;
+
+  // Set plain text headers
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
 
   try {
-    const result = await pool.query(
-      "INSERT INTO prompts (user_id, prompt_text, structured_prompt) VALUES ($1, $2, $3) RETURNING *",
-      [userId, prompt, structuredPrompt || null]
-    );
+    const stream = await client.responses.create({
+      model: "gpt-5-mini",
+      input: [{ role: "user", content: fullPrompt }],
+      stream: true,
+    });
 
-    res.json({ success: true, data: result.rows[0] });
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta") {
+        // write raw code directly
+        res.write(event.delta);
+      }
+    }
+
+    res.end();
   } catch (err) {
-    console.error("DB Error:", err);
-    res.status(500).json({ success: false, message: "Database error" });
+    console.error(err);
+    res.end(`Error: ${err.message}`);
   }
 });
-
 
 
 

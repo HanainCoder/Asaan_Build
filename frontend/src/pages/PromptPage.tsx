@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';   // ✅ ADDED
+import { useAuth } from '@/contexts/AuthContext';   //  ADDED
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
 import { Mic, Send, Sparkles, Lightbulb } from 'lucide-react';
@@ -48,44 +48,17 @@ export function PromptPage() {
   
   //   SAVE PROMPT FUNCTION
  
- const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt.trim()) return;
-    if (!user) return alert("You must be logged in to save prompts!");
+ const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!prompt.trim()) return;
+  if (!user) return alert("You must be logged in!");
 
-    try {
-      // 1️⃣ Prepare structured prompt
-      const prepareRes = await fetch("http://localhost:5000/api/preparePrompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-      const prepareData = await prepareRes.json();
-      if (!prepareData.success) throw new Error("Failed to prepare structured prompt");
+  // Generate a temporary ID (or use timestamp)
+  const tempId = Date.now();
 
-      console.log("Structured Prompt ready:", prepareData.structuredPrompt);
-
-      // 2️⃣ Save original + structured prompt
-      const saveRes = await fetch("http://localhost:5000/api/savePrompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          prompt,
-          structuredPrompt: prepareData.structuredPrompt,
-        }),
-      });
-
-      const saveData = await saveRes.json();
-      console.log("Saved prompt:", saveData);
-
-      // 3️⃣ Navigate to templates page
-      navigate("/templates");
-
-    } catch (err) {
-      console.error("Error submitting prompt:", err);
-    }
-  };
+  // Navigate to code viewer and pass prompt in state
+  navigate(`/code/${tempId}`, { state: { prompt } });
+};
 
 
   const useExample = (example: string) => {
