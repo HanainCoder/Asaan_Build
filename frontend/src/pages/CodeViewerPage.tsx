@@ -11,22 +11,26 @@ export function CodeViewerPage() {
 
   const [loading, setLoading] = useState(true);
   const [code, setCode] = useState("");
+  const [format, setFormat] = useState<"html" | "txt">("html"); // selected format
   const codeRef = useRef<HTMLPreElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // ✅ Function to download the code as HTML
+  // ✅ Function to download code in chosen format
   const downloadCode = () => {
-  if (!code) return;
+    if (!code) return;
 
-  // Save as a raw code file (you can use .txt, .html, or .js)
-  const blob = new Blob([code], { type: "text/plain" }); 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "landing-page-code.txt"; // Name of the file
-  a.click();
-  URL.revokeObjectURL(url);
-};
+    const mime = format === "html" ? "text/html" : "text/plain";
+    const ext = format === "html" ? "html" : "txt";
+    const blob = new Blob([code], { type: mime });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `landing-page-code.${ext}`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     if (!prompt) return;
@@ -64,7 +68,6 @@ export function CodeViewerPage() {
           buffer += line + "\n";
         });
 
-        // Update code preview live
         setCode(buffer);
         if (codeRef.current) {
           codeRef.current.textContent = buffer;
@@ -72,12 +75,10 @@ export function CodeViewerPage() {
         }
       }
 
-      // Flush any remaining content
       if (lineBuffer) buffer += lineBuffer;
       setCode(buffer);
       if (codeRef.current) codeRef.current.textContent = buffer;
 
-      // ✅ Update iframe AFTER full HTML is ready
       if (iframeRef.current) {
         iframeRef.current.srcdoc = buffer;
       }
@@ -91,10 +92,8 @@ export function CodeViewerPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-317">
       <Header showMenu={false} />
-
       <div className="flex flex-1">
         <Sidebar isOpen={false} onClose={() => {}} />
-
         <main className="flex-1 flex flex-col p-6 lg:p-8 overflow-visible">
           {/* Page Header + Download Button */}
           <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-6 w-full max-w-5xl mx-auto gap-4 relative z-10">
@@ -107,17 +106,29 @@ export function CodeViewerPage() {
               </p>
             </div>
 
-            <button
-              onClick={downloadCode}
-              disabled={loading}
-              className={`flex-shrink-0 px-4 py-2 rounded-md text-black transition ${
-                loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700"
-              }`}
-            >
-              {loading ? "Generating..." : "Download Code"}
-            </button>
+            {/* Download Controls */}
+            <div className="flex gap-2">
+              <select
+                value={format}
+                onChange={(e) => setFormat(e.target.value as "html" | "txt")}
+                className="px-3 py-2 rounded-md border border-gray-300"
+              >
+                <option value="html">HTML</option>
+                <option value="txt">TXT</option>
+              </select>
+
+              <button
+                onClick={downloadCode}
+                disabled={loading}
+                className={`flex-shrink-0 px-4 py-2 rounded-md text-black transition ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-700"
+                }`}
+              >
+                {loading ? "Generating..." : "Download"}
+              </button>
+            </div>
           </div>
 
           {/* Code + Preview */}
