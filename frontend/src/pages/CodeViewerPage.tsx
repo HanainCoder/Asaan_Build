@@ -4,32 +4,62 @@ import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+// ... keep all imports and existing code ...
+
 export function CodeViewerPage() {
-  const { state } = useLocation() as { state: { prompt: string } };
+  const { state } = useLocation() as { 
+    state: { prompt: string; userId: number } 
+  };
   const prompt = state?.prompt || "Generate a basic landing page";
+  const userId = state?.userId;
+
   const { t } = useLanguage();
 
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false); // New: saving state
   const [code, setCode] = useState("");
-  const [format, setFormat] = useState<"html" | "txt">("html"); // selected format
+  const [format, setFormat] = useState<"html" | "txt">("html");
   const codeRef = useRef<HTMLPreElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // ✅ Function to download code in chosen format
+  // Download function stays the same
   const downloadCode = () => {
     if (!code) return;
-
     const mime = format === "html" ? "text/html" : "text/plain";
     const ext = format === "html" ? "html" : "txt";
     const blob = new Blob([code], { type: mime });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = `landing-page-code.${ext}`;
     a.click();
-
     URL.revokeObjectURL(url);
+  };
+
+  // New: Save function
+  const saveCode = async () => {
+    if (!code || !userId) return;
+    setSaving(true);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/saveGeneratedCode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, prompt, code }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(`Code saved successfully! Project ID: ${data.projectId}`);
+      } else {
+        alert(`Save failed: ${data.message}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error saving code.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -38,14 +68,11 @@ export function CodeViewerPage() {
     setCode("");
 
     const generate = async () => {
-      const response = await fetch(
-        "http://localhost:5000/api/generateLandingStream",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/generateLandingStream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, userId }),
+      });
 
       const reader = response.body?.getReader();
       if (!reader) return;
@@ -57,13 +84,11 @@ export function CodeViewerPage() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         const chunk = decoder.decode(value);
         lineBuffer += chunk;
 
         const lines = lineBuffer.split("\n");
         lineBuffer = lines.pop() || "";
-
         lines.forEach((line) => {
           buffer += line + "\n";
         });
@@ -78,10 +103,7 @@ export function CodeViewerPage() {
       if (lineBuffer) buffer += lineBuffer;
       setCode(buffer);
       if (codeRef.current) codeRef.current.textContent = buffer;
-
-      if (iframeRef.current) {
-        iframeRef.current.srcdoc = buffer;
-      }
+      if (iframeRef.current) iframeRef.current.srcdoc = buffer;
 
       setLoading(false);
     };
@@ -95,7 +117,7 @@ export function CodeViewerPage() {
       <div className="flex flex-1">
         <Sidebar isOpen={false} onClose={() => {}} />
         <main className="flex-1 flex flex-col p-6 lg:p-8 overflow-visible">
-          {/* Page Header + Download Button */}
+          {/* Page Header + Buttons */}
           <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-6 w-full max-w-5xl mx-auto gap-4 relative z-10">
             <div className="text-center sm:text-left flex-1">
               <h1 className="text-2xl font-bold mb-2">
@@ -106,7 +128,7 @@ export function CodeViewerPage() {
               </p>
             </div>
 
-            {/* Download Controls */}
+            {/* Buttons */}
             <div className="flex gap-2">
               <select
                 value={format}
@@ -127,6 +149,18 @@ export function CodeViewerPage() {
                 }`}
               >
                 {loading ? "Generating..." : "Download"}
+              </button>
+
+              <button
+                onClick={saveCode}
+                disabled={loading || saving || !code}
+                className={`flex-shrink-0 px-4 py-2 rounded-md text-black transition ${
+                  saving
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-500 hover:bg-green-600"
+                }`}
+              >
+                {saving ? "Saving..." : "Save"}
               </button>
             </div>
           </div>

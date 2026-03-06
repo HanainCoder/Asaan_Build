@@ -48,16 +48,18 @@ export function PromptPage() {
   
   //   SAVE PROMPT FUNCTION
  
- const handleSubmit = (e: React.FormEvent) => {
+const [isGenerating, setIsGenerating] = useState(false);
+
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  if (!prompt.trim()) return;
+  if (!prompt.trim() || isGenerating) return;
   if (!user) return alert("You must be logged in!");
 
-  // Generate a temporary ID (or use timestamp)
-  const tempId = Date.now();
+  setIsGenerating(true); //  block further submissions
 
-  // Navigate to code viewer and pass prompt in state
-  navigate(`/code/${tempId}`, { state: { prompt } });
+  navigate(`/code/${Date.now()}`, { 
+    state: { prompt, userId: user.id } 
+  });
 };
 
 
