@@ -79,20 +79,22 @@ app.post("/api/generateLandingStream", async (req, res) => {
   if (!prompt) return res.status(400).json({ error: "Prompt required" });
 
   const fullPrompt = `
-You are an AI web developer. Generate a **complete HTML landing page** for this request:
+You are an AI web developer. 
+user request:
 "${prompt}"
-
-- Include all CSS inside a <style> tag in the HTML (no separate files).
-- Respond line by line as if streaming.
-- Include 2 sections.
-- Make it responsive and visually structured.
-- Use modern fonts (Google Fonts) and consistent color themes.
-- Use pleasant spacing, padding, margins, and card layouts.
-- Include hero images and placeholder images.
-- Use buttons with hover effects.
-- Add simple CSS animations/transitions.
-- For Urdu prompts, generate placeholder text in Urdu where appropriate.
-- Do NOT ask any questions. Output the complete code directly.
+Rules:
+- If the request is in Urdu, Roman Urdu, or Roman English, convert it to English internally.
+- The generated website content must be in English only.
+Requirements:
+- Generate ONLY ONE landing page preview section.
+- The section must look complete and professional.
+- Keep the section medium sized (not a full page).
+- Do NOT generate multiple sections.
+Output:
+- Return a complete HTML file.
+- Load Tailwind via CDN.
+- Respond line-by-line as if streaming.
+- Output code only. No explanations or questions.
 `;
 
   // Set plain text headers
