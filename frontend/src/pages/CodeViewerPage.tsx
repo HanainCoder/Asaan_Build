@@ -42,7 +42,7 @@ export function CodeViewerPage() {
     setSaving(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/saveGeneratedCode", {
+      const res = await fetch("http://localhost:5000/api/saveMyProject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, prompt, code }),

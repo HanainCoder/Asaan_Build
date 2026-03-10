@@ -3,6 +3,7 @@ import cors from "cors";
 import { pool } from "./db.js";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
+import puppeteer from "puppeteer";
 dotenv.config();
 import OpenAI from "openai";
 
@@ -15,11 +16,33 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/thumbnails", express.static("thumbnails"));
 
 // Test
 app.get("/", (req, res) => {
   res.send("Backend is running...");
 });
+
+
+// helper to generate project name from prompt
+function generateProjectName(prompt) {
+  return prompt
+    .split(" ")
+    .slice(0, 3)
+    .join(" ")
+    .replace(/[^a-zA-Z0-9 ]/g, "") + " Project";
+}
+
+// helper to create screenshot thumbnail
+async function createThumbnail(html, projectId) {
+  const browser = await puppeteer.launch({ args: ["--no-sandbox"] });
+  const page = await browser.newPage();
+  await page.setContent(html);
+  const path = `./thumbnails/project-${projectId}.png`;
+  await page.screenshot({ path, fullPage: false });
+  await browser.close();
+  return path;
+}
 
 //prepare prompt
 // Prepare structured long prompt
@@ -156,7 +179,69 @@ app.post("/api/saveGeneratedCode", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
+// Save the projects in generated_projects (My Projects)
+app.post("/api/saveMyProject", async (req, res) => {
+  const { userId, code, prompt } = req.body;
 
+  if (!userId || !code || !prompt) {
+    return res.status(400).json({ success: false, message: "userId, code and prompt are required" });
+  }
+
+  try {
+    const projectName = generateProjectName(prompt);
+
+    const result = await pool.query(
+      `INSERT INTO generated_projects (user_id, prompt, generated_code, project_name)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [userId, prompt, code, projectName]
+    );
+
+    const projectId = result.rows[0].id;
+
+    const thumbnailPath = await createThumbnail(code, projectId);
+
+    // Strip leading ./ here before saving
+    const thumbnailClean = thumbnailPath.replace(/^\.\//, '');
+
+    await pool.query(
+      `UPDATE generated_projects SET thumbnail=$1 WHERE id=$2`,
+      [thumbnailClean, projectId]
+    );
+
+    res.json({ success: true, projectId, projectName, thumbnail: thumbnailClean });
+  } catch (err) {
+    console.error("SAVE MY PROJECT ERROR:", err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
+});
+// Get all projects for a user
+// Get all projects for a user using query parameter
+app.get("/api/myProjects", async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) return res.status(400).json({ success: false, message: "userId required" });
+
+  try {
+    const result = await pool.query(
+      `SELECT id, project_name AS name, created_at AS date, thumbnail, 'Active' AS status
+       FROM generated_projects
+       WHERE user_id=$1
+       ORDER BY created_at DESC`,
+      [Number(userId)]
+    );
+
+    const projects = result.rows.map(p => ({
+      ...p,
+      thumbnail: p.thumbnail ? p.thumbnail.replace(/^\.\//, '') : null,
+    }));
+
+    res.json({ success: true, projects });
+  } catch (err) {
+    console.error("Fetch projects error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 //  register user
 
 app.post("/api/register", async (req, res) => {
