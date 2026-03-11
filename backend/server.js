@@ -24,13 +24,18 @@ app.get("/", (req, res) => {
 });
 
 
-// helper to generate project name from prompt
+
+// helper to generate project name from prompt (supports Urdu, Roman Urdu, English)
 function generateProjectName(prompt) {
-  return prompt
-    .split(" ")
-    .slice(0, 3)
-    .join(" ")
-    .replace(/[^a-zA-Z0-9 ]/g, "") + " Project";
+  if (!prompt || prompt.trim() === "") return "Untitled Project";
+
+  const cleanPrompt = prompt.trim();
+
+  // truncate for display if too long (optional, e.g., 50 chars)
+  const truncated = cleanPrompt.length > 50 ? cleanPrompt.slice(0, 50) + "..." : cleanPrompt;
+
+  // append "Project" at the end
+  return truncated + " Project";
 }
 
 // helper to create screenshot thumbnail
@@ -239,6 +244,76 @@ app.get("/api/myProjects", async (req, res) => {
     res.json({ success: true, projects });
   } catch (err) {
     console.error("Fetch projects error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+// Delete a project
+app.delete("/api/project/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query("DELETE FROM generated_projects WHERE id = $1", [id]);
+    res.json({ success: true, message: "Project deleted" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+// Rename a project
+app.put("/api/project/:id/rename", async (req, res) => {
+  const { id } = req.params;
+  const { newName } = req.body;
+
+  if (!newName || newName.trim() === "") {
+    return res.status(400).json({ success: false, message: "New name required" });
+  }
+
+  try {
+    await pool.query(
+      "UPDATE generated_projects SET project_name=$1 WHERE id=$2",
+      [newName.trim(), id]
+    );
+    res.json({ success: true, newName });
+  } catch (err) {
+    console.error("Rename error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+// Duplicate a project
+app.post("/api/project/:id/duplicate", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Get original project
+    const result = await pool.query(
+      "SELECT * FROM generated_projects WHERE id=$1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    const original = result.rows[0];
+
+    // Insert duplicate
+    const insert = await pool.query(
+      `INSERT INTO generated_projects 
+       (user_id, prompt, generated_code, project_name, thumbnail)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, project_name, thumbnail`,
+      [
+        original.user_id,
+        original.prompt,
+        original.generated_code,
+        original.project_name + " (Copy)",
+        original.thumbnail,
+      ]
+    );
+
+    res.json({ success: true, project: insert.rows[0] });
+  } catch (err) {
+    console.error("Duplicate error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });

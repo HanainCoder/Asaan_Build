@@ -4,11 +4,15 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
 import { ProjectCard } from '../components/ProjectCard';
+import { useAuth } from '@/contexts/AuthContext';
 import { Search, Grid, List } from 'lucide-react';
 
 export function ProjectsPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth(); // 👈 get logged-in user
+  const userId = user?.id;     // 👈 use this for fetching projects
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -16,11 +20,10 @@ export function ProjectsPage() {
   const [deleteProjectId, setDeleteProjectId] = useState<number | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Replace with your auth user ID
-  const userId = 13;
-
   // Fetch projects from backend
   useEffect(() => {
+    if (!userId) return; // no user logged in yet
+
     const fetchProjects = async () => {
       try {
         const res = await fetch(`http://localhost:5000/api/myProjects?userId=${userId}`);
@@ -43,40 +46,69 @@ export function ProjectsPage() {
         console.error('Error fetching projects:', err);
       }
     };
+
     fetchProjects();
-  }, []);
+  }, [userId]); // 👈 re-run when user logs in
 
   const filteredProjects = projectList.filter((project) =>
     (project.name ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDelete = () => {
-    if (deleteProjectId === null) return;
-    setProjectList((prev) => prev.filter((p) => p.id !== deleteProjectId));
-    setShowDeleteModal(false);
-    setDeleteProjectId(null);
-  };
+  const handleDelete = async () => {
+  if (deleteProjectId === null) return;
 
-  const handleDuplicate = (projectId: number) => {
-    setProjectList((prev) => {
-      const original = prev.find((p) => p.id === projectId);
-      if (!original) return prev;
-
-      const newProject = {
-        ...original,
-        id: Date.now(),
-        name: (original.name || 'Untitled Project') + ' (Copy)',
-        date: new Date().toLocaleDateString(),
-      };
-      return [...prev, newProject];
+  try {
+    const res = await fetch(`http://localhost:5000/api/project/${deleteProjectId}`, {
+      method: "DELETE",
     });
+    const data = await res.json();
+    if (data.success) {
+      setProjectList(prev => prev.filter(p => p.id !== deleteProjectId));
+      setShowDeleteModal(false);
+      setDeleteProjectId(null);
+    }
+  } catch (err) {
+    console.error("Delete failed:", err);
+  }
   };
 
-  const handleRename = (projectId: number, newName: string) => {
-    if (!newName || newName.trim() === '') return;
-    setProjectList((prev) =>
-      prev.map((p) => (p.id === projectId ? { ...p, name: newName.trim() } : p))
-    );
+  const handleDuplicate = async (projectId: number) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/project/${projectId}/duplicate`, {
+      method: "POST",
+    });
+    const data = await res.json();
+    if (data.success) {
+      setProjectList(prev => [...prev, {
+        ...data.project,
+        date: new Date().toLocaleDateString(),
+        status: "Active",
+        thumbnail: data.project.thumbnail ? `http://localhost:5000/${data.project.thumbnail}` : "",
+      }]);
+    }
+  } catch (err) {
+    console.error("Duplicate failed:", err);
+  }
+};
+
+  const handleRename = async (projectId: number, newName: string) => {
+  if (!newName || newName.trim() === "") return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/project/${projectId}/rename`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newName }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setProjectList(prev =>
+        prev.map(p => (p.id === projectId ? { ...p, name: data.newName } : p))
+      );
+    }
+  } catch (err) {
+    console.error("Rename failed:", err);
+  }
   };
 
   return (
