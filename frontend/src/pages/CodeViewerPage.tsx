@@ -23,20 +23,30 @@ const projectId = state?.projectId; // NEW
   const [format, setFormat] = useState<"html" | "txt">("html");
   const codeRef = useRef<HTMLPreElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const autoSavedRef = useRef(false);
 
   // Download function stays the same
   const downloadCode = () => {
-    if (!code) return;
-    const mime = format === "html" ? "text/html" : "text/plain";
-    const ext = format === "html" ? "html" : "txt";
-    const blob = new Blob([code], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `landing-page-code.${ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  if (!code) return;
+
+  // Determine file type and extension
+  const ext = format === "html" ? "html" : "txt";
+  const mime = format === "html" ? "text/html" : "text/plain"; // explicit mime
+
+  // Create Blob for download
+  const blob = new Blob([code], { type: mime });
+  const url = URL.createObjectURL(blob);
+
+  // Create invisible <a> to trigger download
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `landing-page-code.${ext}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+};
 
   // New: Save function
   const saveCode = async () => {
@@ -63,6 +73,33 @@ const projectId = state?.projectId; // NEW
       setSaving(false);
     }
   };
+  //auto save code
+  const autoSaveCode = async (finalCode: string) => {
+  if (!finalCode || !userId) return;
+
+  // prevent saving twice
+  if (autoSavedRef.current) return;
+  autoSavedRef.current = true;
+
+  try {
+    const res = await fetch("http://localhost:5000/api/saveMyProject", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId, prompt, code: finalCode }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      console.log("Auto saved project:", data.projectId);
+    }
+
+  } catch (err) {
+    console.error("Auto save failed:", err);
+  }
+};
 
   useEffect(() => {
     // NEW: if opening saved project → load from database
@@ -136,8 +173,13 @@ const projectId = state?.projectId; // NEW
       if (lineBuffer) buffer += lineBuffer;
       setCode(buffer);
       if (codeRef.current) codeRef.current.textContent = buffer;
-      if (iframeRef.current) iframeRef.current.srcdoc = buffer;
+      // ✅ LIVE PREVIEW ONLY
+      if (iframeRef.current) {
+          iframeRef.current.srcdoc = buffer;
+      }
 
+      // AUTO SAVE FINAL GPT CODE
+      await autoSaveCode(buffer);
       setLoading(false);
     };
 
