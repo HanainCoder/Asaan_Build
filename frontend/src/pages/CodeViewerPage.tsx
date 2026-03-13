@@ -8,10 +8,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 export function CodeViewerPage() {
   const { state } = useLocation() as { 
-    state: { prompt: string; userId: number } 
-  };
-  const prompt = state?.prompt || "Generate a basic landing page";
-  const userId = state?.userId;
+  state?: { prompt?: string; userId?: number; projectId?: number } 
+};
+
+const prompt = state?.prompt || "Generate a basic landing page";
+const userId = state?.userId;
+const projectId = state?.projectId; // NEW
 
   const { t } = useLanguage();
 
@@ -63,6 +65,37 @@ export function CodeViewerPage() {
   };
 
   useEffect(() => {
+    // NEW: if opening saved project → load from database
+  if (projectId) {
+    const loadSavedProject = async () => {
+      setLoading(true);
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/project/${projectId}/code`);
+        const data = await res.json();
+
+        if (data.success) {
+          setCode(data.code);
+
+          if (codeRef.current) {
+            codeRef.current.textContent = data.code;
+          }
+
+          if (iframeRef.current) {
+            iframeRef.current.srcdoc = data.code;
+          }
+        }
+
+      } catch (err) {
+        console.error("Load project error", err);
+      }
+
+      setLoading(false);
+    };
+
+    loadSavedProject();
+    return; // stop GPT generation
+  }
     if (!prompt) return;
     setLoading(true);
     setCode("");
@@ -109,7 +142,7 @@ export function CodeViewerPage() {
     };
 
     generate();
-  }, [prompt]);
+  }, [prompt, projectId]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-317">

@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, type ReactNode } from "react";
-
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 interface User {
   id: string;
   name: string;
@@ -19,6 +18,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  useEffect(() => {
+  
+}, []);
 
 
   // login — sets the user
@@ -32,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
-
+    localStorage.setItem("token", data.token);   // ⭐ ADD THIS
     setUser(data.user); //  Login sets user
   };
   // reg — does NOT log in the user
@@ -55,8 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // LOGOUT
  
   const logout = () => {
-    setUser(null);
-  };
+  localStorage.removeItem("token"); // ⭐ ADD
+  setUser(null);
+};
 
   return (
     <AuthContext.Provider

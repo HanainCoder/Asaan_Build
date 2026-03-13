@@ -10,8 +10,8 @@ import { Search, Grid, List } from 'lucide-react';
 export function ProjectsPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { user } = useAuth(); // 👈 get logged-in user
-  const userId = user?.id;     // 👈 use this for fetching projects
+  const { user } = useAuth(); //  get logged-in user
+  const userId = user?.id;     //  use this for fetching projects
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,7 +170,11 @@ export function ProjectsPage() {
                     date={project.date}
                     status={project.status}
                     thumbnail={project.thumbnail || ''}
-                    onOpen={() => navigate(`/dashboard/${project.id}`)}
+                    onOpen={() =>
+                      navigate(`/code/${project.id}`, {
+                      state: { projectId: project.id }
+                       })
+                     }
                     onRename={(newName) => handleRename(project.id, newName)}
                     onDuplicate={() => handleDuplicate(project.id)}
                     onDelete={() => { setDeleteProjectId(project.id); setShowDeleteModal(true); }}
