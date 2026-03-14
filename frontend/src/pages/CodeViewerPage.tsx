@@ -22,6 +22,7 @@ const projectId = state?.projectId; // NEW
   const [saving, setSaving] = useState(false); // New: saving state
   const [code, setCode] = useState("");
   const [format, setFormat] = useState<"html" | "txt">("html");
+  const [promptInput, setPromptInput] = useState(prompt);
   const codeRef = useRef<HTMLPreElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autoSavedRef = useRef(false);
@@ -137,6 +138,48 @@ const projectId = state?.projectId; // NEW
     console.error("Auto save failed:", err);
   }
 };
+    const regeneratePrompt = async () => {
+
+  if (!currentProjectId || !promptInput) return;
+
+  setLoading(true);
+
+  try {
+
+    const res = await fetch(
+      `http://localhost:5000/api/project/${currentProjectId}/regenerate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          prompt: promptInput
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.success) {
+
+      setCode(data.code);
+
+      if (iframeRef.current) {
+        iframeRef.current.srcdoc = data.code;
+      }
+
+      alert(`New version created (v${data.version})`);
+
+    }
+
+  } catch (err) {
+    console.error("Regenerate error:", err);
+  }
+
+  setLoading(false);
+};
+
 
   useEffect(() => {
     // NEW: if opening saved project → load from database
@@ -239,6 +282,26 @@ const projectId = state?.projectId; // NEW
                 Preview the code and live website generated from your prompt.
               </p>
             </div>
+            {/* Prompt Editor */}
+<div className="flex gap-2 w-full mb-3">
+
+  <input
+    value={promptInput}
+    onChange={(e) => setPromptInput(e.target.value)}
+    placeholder="Edit prompt and regenerate..."
+    className="flex-1 px-3 py-2 border rounded-md"
+  />
+
+  <button
+    onClick={regeneratePrompt}
+    disabled={!currentProjectId || loading}
+    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+  >
+    Regenerate
+  </button>
+
+</div>
+
 
             {/* Buttons */}
             <div className="flex gap-2">

@@ -448,7 +448,7 @@ app.get("/api/project/:id/code", async (req, res) => {
 // Save edited code as new version
 app.post("/api/project/:id/version", async (req, res) => {
   const { id } = req.params;
-  const { code } = req.body;
+  const { code} = req.body;
 
   if (!code) {
     return res.status(400).json({ success: false, message: "Code required" });
@@ -456,7 +456,7 @@ app.post("/api/project/:id/version", async (req, res) => {
 
   try {
 
-    // get latest version number
+    // Get latest version number
     const result = await pool.query(
       "SELECT MAX(version_number) as max FROM project_versions WHERE project_id=$1",
       [id]
@@ -464,14 +464,15 @@ app.post("/api/project/:id/version", async (req, res) => {
 
     const nextVersion = (result.rows[0].max || 0) + 1;
 
-    // insert new version
+    // Insert new version (NOW includes prompt)
     await pool.query(
-      `INSERT INTO project_versions (project_id, code, version_number)
-       VALUES ($1,$2,$3)`,
-      [id, code, nextVersion]
+      `INSERT INTO project_versions 
+       (project_id, version_number, code)
+       VALUES ($1, $2, $3)`,
+      [id, nextVersion, code || null]
     );
 
-    // update latest code in main table
+    // Update latest code in main table (keep this)
     await pool.query(
       `UPDATE generated_projects SET generated_code=$1 WHERE id=$2`,
       [code, id]
@@ -487,6 +488,106 @@ app.post("/api/project/:id/version", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+//for regerneraton
+app.post("/api/project/:id/regenerate", async (req, res) => {
+
+  const { id } = req.params;
+  const { prompt } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({ success:false, message:"Prompt required"});
+  }
+
+  try {
+
+    // get existing project code
+    const projectResult = await pool.query(
+      "SELECT generated_code FROM generated_projects WHERE id=$1",
+      [id]
+    );
+
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({ success:false, message:"Project not found"});
+    }
+
+    const existingCode = projectResult.rows[0].generated_code;
+
+    // get latest version
+    const versionResult = await pool.query(
+      "SELECT MAX(version_number) as max FROM project_versions WHERE project_id=$1",
+      [id]
+    );
+
+    const nextVersion = (versionResult.rows[0].max || 0) + 1;
+
+    // SHORT PROMPT (token saving)
+    const fullPrompt = `
+You are editing an existing Tailwind landing page.
+
+Existing HTML:
+${existingCode}
+
+User request:
+${prompt}
+
+Rules:
+- DO NOT rewrite the whole page
+- Only add or modify 1 small section
+- Keep Tailwind styling
+- Return full updated HTML
+
+`;
+
+    // streaming headers
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    let fullCode = "";
+
+    const stream = await client.responses.create({
+      model: "gpt-5-mini",
+      input: [{ role: "user", content: fullPrompt }],
+      stream: true
+    });
+
+    for await (const event of stream) {
+
+      if (event.type === "response.output_text.delta") {
+
+        res.write(event.delta);
+        fullCode += event.delta;
+
+      }
+
+    }
+
+    res.end();
+
+    // save version AFTER streaming
+    await pool.query(
+      `INSERT INTO project_versions
+       (project_id, version_number, prompt, code)
+       VALUES ($1,$2,$3,$4)`,
+      [id, nextVersion, prompt, fullCode]
+    );
+
+    // update latest code
+    await pool.query(
+      `UPDATE generated_projects
+       SET generated_code=$1, prompt=$2
+       WHERE id=$3`,
+      [fullCode, prompt, id]
+    );
+
+  } catch(err){
+    console.error(err);
+    res.end("Server error");
+  }
+
+});
+
+
 //api to load saved code late
 // START SERVER
 app.listen(process.env.PORT, () => {
