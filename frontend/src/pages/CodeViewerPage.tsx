@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
 import { useLanguage } from "@/contexts/LanguageContext";
+import Editor from "@monaco-editor/react";
 
 // ... keep all imports and existing code ...
 
@@ -244,13 +245,22 @@ const projectId = state?.projectId; // NEW
           <div className="flex flex-1 border rounded-2xl overflow-hidden shadow-lg min-h-[500px]">
             {/* Code Viewer */}
             <div className="w-1/2 h-full overflow-auto bg-gray-900 rounded-l-2xl">
-              <pre
-                ref={codeRef}
-                className="h-full p-6 font-mono text-sm text-green-400 whitespace-pre-wrap"
-              >
-                {code}
-              </pre>
-            </div>
+  <Editor
+    height="100%"
+    defaultLanguage="html"
+    theme="vs-dark"
+    value={code}
+    onChange={(value) => {
+      const updatedCode = value || "";
+      setCode(updatedCode);
+
+      // update preview instantly
+      if (iframeRef.current) {
+        iframeRef.current.srcdoc = updatedCode;
+      }
+    }}
+  />
+</div>
 
             {/* Live Preview */}
             <div className="w-1/2 h-full border-l rounded-r-2xl relative">
