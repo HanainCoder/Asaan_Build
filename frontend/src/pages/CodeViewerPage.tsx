@@ -25,6 +25,9 @@ const projectId = state?.projectId; // NEW
   const codeRef = useRef<HTMLPreElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autoSavedRef = useRef(false);
+  const [currentProjectId, setCurrentProjectId] = useState<number | null>(
+  projectId || null
+);
 
   // Download function stays the same
   const downloadCode = () => {
@@ -51,29 +54,61 @@ const projectId = state?.projectId; // NEW
 
   // New: Save function
   const saveCode = async () => {
-    if (!code || !userId) return;
-    setSaving(true);
+  if (!code) return;
 
-    try {
-      const res = await fetch("http://localhost:5000/api/saveMyProject", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, prompt, code }),
-      });
+  setSaving(true);
+
+  try {
+
+    // If project already exists → create NEW VERSION
+    if (currentProjectId) {
+
+      const res = await fetch(
+        `http://localhost:5000/api/project/${currentProjectId}/version`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        }
+      );
 
       const data = await res.json();
+
       if (data.success) {
-        alert(`Code saved successfully! Project ID: ${data.projectId}`);
+        alert(`New version saved (v${data.version})`);
       } else {
-        alert(`Save failed: ${data.message}`);
+        alert("Version save failed");
       }
-    } catch (err) {
-      console.error(err);
-      alert("Error saving code.");
-    } finally {
-      setSaving(false);
+
+    } 
+    // If it's new project (not saved yet)
+    else {
+
+      const res = await fetch(
+        "http://localhost:5000/api/saveMyProject",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, prompt, code }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setCurrentProjectId(data.projectId); // important
+        alert("Project saved successfully!");
+      }
+
     }
-  };
+
+  } catch (err) {
+    console.error(err);
+    alert("Error saving project.");
+  }
+
+  setSaving(false);
+};
   //auto save code
   const autoSaveCode = async (finalCode: string) => {
   if (!finalCode || !userId) return;
@@ -94,6 +129,7 @@ const projectId = state?.projectId; // NEW
     const data = await res.json();
 
     if (data.success) {
+      setCurrentProjectId(data.projectId);
       console.log("Auto saved project:", data.projectId);
     }
 

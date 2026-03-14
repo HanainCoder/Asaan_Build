@@ -206,6 +206,13 @@ app.post("/api/saveMyProject", async (req, res) => {
 
     const projectId = result.rows[0].id;
 
+    // VERSION 1 SAVE
+    await pool.query(
+      `INSERT INTO project_versions (project_id, code, version_number)
+      VALUES ($1, $2, $3)`,
+      [projectId, code, 1]
+     );
+
     const thumbnailPath = await createThumbnail(code, projectId);
 
     // Strip leading ./ here before saving
@@ -436,6 +443,48 @@ app.get("/api/project/:id/code", async (req, res) => {
       success: false, 
       message: "Server error" 
     });
+  }
+});
+// Save edited code as new version
+app.post("/api/project/:id/version", async (req, res) => {
+  const { id } = req.params;
+  const { code } = req.body;
+
+  if (!code) {
+    return res.status(400).json({ success: false, message: "Code required" });
+  }
+
+  try {
+
+    // get latest version number
+    const result = await pool.query(
+      "SELECT MAX(version_number) as max FROM project_versions WHERE project_id=$1",
+      [id]
+    );
+
+    const nextVersion = (result.rows[0].max || 0) + 1;
+
+    // insert new version
+    await pool.query(
+      `INSERT INTO project_versions (project_id, code, version_number)
+       VALUES ($1,$2,$3)`,
+      [id, code, nextVersion]
+    );
+
+    // update latest code in main table
+    await pool.query(
+      `UPDATE generated_projects SET generated_code=$1 WHERE id=$2`,
+      [code, id]
+    );
+
+    res.json({
+      success: true,
+      version: nextVersion
+    });
+
+  } catch (err) {
+    console.error("VERSION SAVE ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 //api to load saved code late
