@@ -9,6 +9,7 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || "asaanbuild_secret";
 import OpenAI from "openai";
 
+
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 //for  open ai  
 
@@ -18,6 +19,10 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const app = express();
 app.use(cors());
 app.use(express.json());
+//for google auth
+import passport from "./config/googleAuth.js";
+app.use(passport.initialize());
+
 app.use("/thumbnails", express.static("thumbnails"));
 
 // Test
@@ -26,6 +31,27 @@ app.get("/", (req, res) => {
 });
 
 
+// Start Google Login
+app.get(
+  "/api/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// Google callback
+app.get(
+  "/api/auth/google/callback",
+  passport.authenticate("google", { session: false }),
+  (req, res) => {
+
+    const token = jwt.sign(
+      { id: req.user.id, email: req.user.email },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.redirect(`http://localhost:5173/auth-success?token=${token}`);
+  }
+);
 
 // helper to generate project name from prompt (supports Urdu, Roman Urdu, English)
 function generateProjectName(prompt) {
@@ -141,7 +167,7 @@ Output:
       input: [{ role: "user", content: fullPrompt }],
       stream: true,
     });
-    let fullCode = ""; // store complete code
+    
 
     for await (const event of stream) {
       if (event.type === "response.output_text.delta") {
@@ -489,103 +515,114 @@ app.post("/api/project/:id/version", async (req, res) => {
   }
 });
 //for regerneraton
-app.post("/api/project/:id/regenerate", async (req, res) => {
+// app.post("/api/project/:id/regenerate", async (req, res) => {
 
-  const { id } = req.params;
-  const { prompt } = req.body;
+//   const { id } = req.params;
+//   const { prompt } = req.body;
 
-  if (!prompt) {
-    return res.status(400).json({ success:false, message:"Prompt required"});
-  }
+//   if (!prompt) {
+//     return res.status(400).json({ success:false, message:"Prompt required"});
+//   }
 
-  try {
+//   try {
 
-    // get existing project code
-    const projectResult = await pool.query(
-      "SELECT generated_code FROM generated_projects WHERE id=$1",
-      [id]
-    );
+//     // get existing project code
+//     const projectResult = await pool.query(
+//       "SELECT generated_code FROM generated_projects WHERE id=$1",
+//       [id]
+//     );
 
-    if (projectResult.rows.length === 0) {
-      return res.status(404).json({ success:false, message:"Project not found"});
-    }
+//     if (projectResult.rows.length === 0) {
+//       return res.status(404).json({ success:false, message:"Project not found"});
+//     }
 
-    const existingCode = projectResult.rows[0].generated_code;
+//     const existingCode = projectResult.rows[0].generated_code;
 
-    // get latest version
-    const versionResult = await pool.query(
-      "SELECT MAX(version_number) as max FROM project_versions WHERE project_id=$1",
-      [id]
-    );
+//     // get latest version
+//     const versionResult = await pool.query(
+//       "SELECT MAX(version_number) as max FROM project_versions WHERE project_id=$1",
+//       [id]
+//     );
 
-    const nextVersion = (versionResult.rows[0].max || 0) + 1;
+//     const nextVersion = (versionResult.rows[0].max || 0) + 1;
 
-    // SHORT PROMPT (token saving)
-    const fullPrompt = `
-You are editing an existing Tailwind landing page.
+//     // SHORT PROMPT (token saving)
+//     const fullPrompt = `
+// You are a precise code editor.
 
-Existing HTML:
-${existingCode}
+// Your job is to modify EXISTING HTML with the SMALLEST possible change.
 
-User request:
-${prompt}
 
-Rules:
-- DO NOT rewrite the whole page
-- Only add or modify 1 small section
-- Keep Tailwind styling
-- Return full updated HTML
+// USER REQUEST:
+// ${prompt}
 
-`;
+// EXISTING HTML:
+// ${existingCode}
 
-    // streaming headers
-    res.setHeader("Content-Type", "text/plain");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
+// Editor Rules:
+// - Modify the EXISTING HTML with the SMALLEST possible change.
+// - Insert new sections ONLY at the placeholder: <!-- PLACEHOLDER: ADDITIONAL SECTIONS HERE -->
+// - Preserve all existing layout, structure, and Tailwind classes.
+// - Do NOT redesign or remove unrelated elements.
+// - If changing text, update only that text.
+// - If changing color, update only Tailwind classes.
+// - Keep 90–95% of the original HTML unchanged.
 
-    let fullCode = "";
+// - Output ONLY the updated HTML.
+// - DO NOT add new <html>, <head>, <body> tags.
+// - Keep the page structure intact.
+// - Insert new sections inline at the placeholder.
 
-    const stream = await client.responses.create({
-      model: "gpt-5-mini",
-      input: [{ role: "user", content: fullPrompt }],
-      stream: true
-    });
+// `;
 
-    for await (const event of stream) {
+//     // streaming headers
+//     res.setHeader("Content-Type", "text/plain");
+//     res.setHeader("Cache-Control", "no-cache");
+//     res.setHeader("Connection", "keep-alive");
 
-      if (event.type === "response.output_text.delta") {
+//     let fullCode = "";
 
-        res.write(event.delta);
-        fullCode += event.delta;
+//     const stream = await client.responses.create({
+//       model: "gpt-5-mini",
+//       input: [{ role: "user", content: fullPrompt }],
+//       stream: true
+//     });
 
-      }
+//     for await (const event of stream) {
 
-    }
+//       if (event.type === "response.output_text.delta") {
 
-    res.end();
+//         res.write(event.delta);
+//         fullCode += event.delta;
 
-    // save version AFTER streaming
-    await pool.query(
-      `INSERT INTO project_versions
-       (project_id, version_number, prompt, code)
-       VALUES ($1,$2,$3,$4)`,
-      [id, nextVersion, prompt, fullCode]
-    );
+//       }
 
-    // update latest code
-    await pool.query(
-      `UPDATE generated_projects
-       SET generated_code=$1, prompt=$2
-       WHERE id=$3`,
-      [fullCode, prompt, id]
-    );
+//     }
 
-  } catch(err){
-    console.error(err);
-    res.end("Server error");
-  }
+//     res.end();
 
-});
+//     // save version AFTER streaming
+//     await pool.query(
+//       `INSERT INTO project_versions
+//        (project_id, version_number, prompt, code)
+//        VALUES ($1,$2,$3,$4)`,
+//       [id, nextVersion, prompt, fullCode]
+//     );
+
+//     // update latest code
+//     await pool.query(
+//       `UPDATE generated_projects
+//        SET generated_code=$1, prompt=$2
+//        WHERE id=$3`,
+//       [fullCode, prompt, id]
+//     );
+
+//   } catch(err){
+//     console.error(err);
+//     res.end("Server error");
+//   }
+
+// });
 
 
 //api to load saved code late

@@ -34,6 +34,9 @@ export function LoginPage() {
       }
     }
   };
+  const handleGoogleLogin = () => {
+  window.location.href = "http://localhost:5000/api/auth/google";
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -137,6 +140,19 @@ export function LoginPage() {
               {t('signUp')}
             </button>
           </p>
+          {/* Google Login Button */}
+<button
+  type="button"
+  onClick={handleGoogleLogin}
+  className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+>
+  <img
+    src="https://www.svgrepo.com/show/475656/google-color.svg"
+    alt="Google"
+    className="w-5 h-5"
+  />
+  Continue with Google
+</button>
         </div>
       </div>
     </div>

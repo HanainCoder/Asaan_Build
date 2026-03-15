@@ -22,7 +22,7 @@ const projectId = state?.projectId; // NEW
   const [saving, setSaving] = useState(false); // New: saving state
   const [code, setCode] = useState("");
   const [format, setFormat] = useState<"html" | "txt">("html");
-  const [promptInput, setPromptInput] = useState(prompt);
+  // const [promptInput, setPromptInput] = useState(prompt);
   const codeRef = useRef<HTMLPreElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autoSavedRef = useRef(false);
@@ -138,47 +138,60 @@ const projectId = state?.projectId; // NEW
     console.error("Auto save failed:", err);
   }
 };
-    const regeneratePrompt = async () => {
+  //  regenerte prompt
+//   const regeneratePrompt = async () => {
 
-  if (!currentProjectId || !promptInput) return;
+//   if (!currentProjectId || !promptInput) return;
 
-  setLoading(true);
+//   setLoading(true);
+//   setCode("");
 
-  try {
+//   try {
 
-    const res = await fetch(
-      `http://localhost:5000/api/project/${currentProjectId}/regenerate`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          prompt: promptInput
-        })
-      }
-    );
+//     const response = await fetch(
+//       `http://localhost:5000/api/project/${currentProjectId}/regenerate`,
+//       {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json"
+//         },
+//         body: JSON.stringify({
+//           prompt: promptInput
+//         })
+//       }
+//     );
 
-    const data = await res.json();
+//     const reader = response.body?.getReader();
+//     if (!reader) return;
 
-    if (data.success) {
+//     const decoder = new TextDecoder();
 
-      setCode(data.code);
+//     let buffer = "";
 
-      if (iframeRef.current) {
-        iframeRef.current.srcdoc = data.code;
-      }
+//     while (true) {
 
-      alert(`New version created (v${data.version})`);
+//       const { done, value } = await reader.read();
 
-    }
+//       if (done) break;
 
-  } catch (err) {
-    console.error("Regenerate error:", err);
-  }
+//       const chunk = decoder.decode(value);
 
-  setLoading(false);
-};
+//       buffer += chunk;
+
+//       setCode(buffer);
+
+//       if (iframeRef.current) {
+//         iframeRef.current.srcdoc = buffer;
+//       }
+
+//     }
+
+//   } catch (err) {
+//     console.error("Regenerate error:", err);
+//   }
+
+//   setLoading(false);
+// };
 
 
   useEffect(() => {
@@ -283,7 +296,8 @@ const projectId = state?.projectId; // NEW
               </p>
             </div>
             {/* Prompt Editor */}
-<div className="flex gap-2 w-full mb-3">
+            {/*  
+       <div className="flex gap-2 w-full mb-3">
 
   <input
     value={promptInput}
@@ -302,7 +316,7 @@ const projectId = state?.projectId; // NEW
 
 </div>
 
-
+*/}
             {/* Buttons */}
             <div className="flex gap-2">
               <select

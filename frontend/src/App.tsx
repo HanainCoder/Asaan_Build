@@ -15,14 +15,16 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SupportPage } from './pages/SupportPage';
 import { VersionControlPage } from './pages/VersionControlPage';
+import { AuthSuccess } from "./pages/AuthSuccess";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 
 
 // Protected route wrapper
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
-}
+// function ProtectedRoute({ children }: { children: React.ReactNode }) {
+//   const { isAuthenticated } = useAuth();
+//   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+// }
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -78,6 +80,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       /> */}
+      <Route
+       path="/auth-success"
+      element={<AuthSuccess />} />
      
       <Route
         path="/code/:id"
