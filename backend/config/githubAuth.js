@@ -11,27 +11,36 @@ passport.use(
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: "http://localhost:5000/api/auth/github/callback",
-      scope: ["user:email"],
+      scope: ["user:email", "repo"],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-
         const githubId = profile.id;
+        const username = profile.username;
         const email = profile.emails?.[0]?.value || null;
         const name = profile.displayName || profile.username;
         const avatar = profile.photos?.[0]?.value || null;
 
-        // 1️⃣ FIRST: Check by github_id (MOST IMPORTANT)
-        const githubUser = await pool.query(
+        // 1️⃣ Check by github_id
+        const existing = await pool.query(
           "SELECT * FROM users WHERE github_id=$1",
           [githubId]
         );
 
-        if (githubUser.rows.length > 0) {
-          return done(null, githubUser.rows[0]);
+        if (existing.rows.length > 0) {
+          const updated = await pool.query(
+            `UPDATE users
+             SET github_token=$1,
+                 github_username=$2
+             WHERE github_id=$3
+             RETURNING *`,
+            [accessToken, username, githubId]
+          );
+
+          return done(null, updated.rows[0]);
         }
 
-        // 2️⃣ THEN: Check by email (for merging)
+        // 2️⃣ Check by email (merge)
         if (email) {
           const emailUser = await pool.query(
             "SELECT * FROM users WHERE email=$1",
@@ -39,26 +48,28 @@ passport.use(
           );
 
           if (emailUser.rows.length > 0) {
-
-            // Update existing account with github_id
-            const updatedUser = await pool.query(
+            const updated = await pool.query(
               `UPDATE users
-               SET github_id=$1, provider='google+github'
-               WHERE email=$2
+               SET github_id=$1,
+                   github_username=$2,
+                   github_token=$3,
+                   provider='google+github'
+               WHERE email=$4
                RETURNING *`,
-              [githubId, email]
+              [githubId, username, accessToken, email]
             );
 
-            return done(null, updatedUser.rows[0]);
+            return done(null, updated.rows[0]);
           }
         }
 
-        // 3️⃣ If nothing found → create new user
+        // 3️⃣ Create new user
         const newUser = await pool.query(
-          `INSERT INTO users (email, github_id, name, avatar, provider)
-           VALUES ($1,$2,$3,$4,$5)
+          `INSERT INTO users
+           (email, github_id, github_username, name, avatar, provider, github_token)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)
            RETURNING *`,
-          [email, githubId, name, avatar, "github"]
+          [email, githubId, username, name, avatar, "github", accessToken]
         );
 
         return done(null, newUser.rows[0]);
