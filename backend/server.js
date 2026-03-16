@@ -22,6 +22,8 @@ app.use(express.json());
 //for google auth
 import passport from "./config/googleAuth.js";
 app.use(passport.initialize());
+//for github auth
+import githubPassport from "./config/githubAuth.js";
 
 app.use("/thumbnails", express.static("thumbnails"));
 
@@ -53,6 +55,27 @@ app.get(
   }
 );
 
+// Start GitHub Login
+app.get(
+  "/api/auth/github",
+  githubPassport.authenticate("github", { scope: ["user:email"] })
+);
+
+// GitHub callback
+app.get(
+  "/api/auth/github/callback",
+  githubPassport.authenticate("github", { session: false }),
+  (req, res) => {
+
+    const token = jwt.sign(
+      { id: req.user.id, email: req.user.email },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.redirect(`http://localhost:5173/auth-success?token=${token}`);
+  }
+);
 // helper to generate project name from prompt (supports Urdu, Roman Urdu, English)
 function generateProjectName(prompt) {
   if (!prompt || prompt.trim() === "") return "Untitled Project";

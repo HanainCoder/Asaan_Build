@@ -49,6 +49,9 @@ export function RegisterPage() {
   const handleGoogleSignup = () => {
   window.location.href = "http://localhost:5000/api/auth/google";
 };
+const handleGithubSignup = () => {
+  window.location.href = "http://localhost:5000/api/auth/github";
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
@@ -229,10 +232,13 @@ export function RegisterPage() {
                 Sign Up with Google
               </button>
 
-              <button className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <Github className="size-5" />
-                GitHub
-              </button>
+              <button
+  onClick={handleGithubSignup}
+  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+>
+  <Github className="size-5" />
+  Sign Up with GitHub
+</button>
             </div>
           </div>
 

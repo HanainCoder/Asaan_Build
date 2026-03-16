@@ -37,6 +37,10 @@ export function LoginPage() {
   const handleGoogleLogin = () => {
   window.location.href = "http://localhost:5000/api/auth/google";
 };
+  
+  const handleGithubLogin = () => {
+  window.location.href = "http://localhost:5000/api/auth/github";
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -152,6 +156,14 @@ export function LoginPage() {
     className="w-5 h-5"
   />
   Continue with Google
+</button>
+<button
+  type="button"
+  onClick={handleGithubLogin}
+  className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition mt-3"
+>
+  <Github className="w-5 h-5" />
+  Continue with GitHub
 </button>
         </div>
       </div>
