@@ -22,8 +22,8 @@ passport.use(
 
         if (user.rows.length === 0) {
           user = await pool.query(
-            "INSERT INTO users (email,name,avatar,google_id) VALUES ($1,$2,$3,$4) RETURNING *",
-            [email, name, avatar, profile.id]
+            "INSERT INTO users (email,name,avatar,google_id,provider) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+            [email, name, avatar, profile.id, "google"]
           );
         }
 
