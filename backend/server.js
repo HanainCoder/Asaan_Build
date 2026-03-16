@@ -74,10 +74,16 @@ app.get(
 );
 
 // Start GitHub Login
-app.get(
-  "/api/auth/github",
-  githubPassport.authenticate("github", { scope: ["user:email", "repo"] })
-);
+app.get("/api/auth/github", (req, res, next) => {
+  const { projectId } = req.query;
+
+  const authenticator = githubPassport.authenticate("github", {
+    scope: ["user:email", "repo"],
+    state: projectId
+  });
+
+  authenticator(req, res, next);
+});
 
 
 
@@ -86,13 +92,28 @@ app.get(
   githubPassport.authenticate("github", { session: false }),
   async (req, res) => {
     try {
+      const projectId = req.query.state || null; // default to null if undefined
+
+      // Update user to mark GitHub connected
+      await pool.query(
+        `UPDATE users
+         SET github_token = $1, github_username = $2
+         WHERE id = $3`,
+        [req.user.github_token, req.user.github_username, req.user.id]
+      );
+
       const token = jwt.sign(
         { id: req.user.id },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
       );
 
-      res.redirect(`http://localhost:5173/auth-success?token=${token}`);
+      // Only include projectId in URL if it exists
+      const redirectUrl = `http://localhost:5173/codeviewer?token=${token}` +
+        (projectId ? `&projectId=${projectId}` : "");
+
+      res.redirect(redirectUrl);
+
     } catch (err) {
       console.error(err);
       res.redirect("http://localhost:5173/login");
@@ -673,67 +694,8 @@ app.post("/api/project/:id/version", async (req, res) => {
 
 
 
-app.post("/api/github/upload", authenticateToken, async (req, res) => {
-  try {
-    const { fileContent, repoName } = req.body;
 
-    const user = await pool.query(
-      "SELECT github_token FROM users WHERE id=$1",
-      [req.user.id]
-    );
 
-    const token = user.rows[0]?.github_token;
-
-    if (!token) {
-      return res.status(400).json({ message: "GitHub not connected" });
-    }
-
-    const userRes = await axios.get("https://api.github.com/user", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const username = userRes.data.login;
-
-    // Create repo
-    const repo = await axios.post(
-      "https://api.github.com/user/repos",
-      {
-        name: repoName,
-        private: false
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json"
-        }
-      }
-    );
-
-    // Upload index.html
-    await axios.put(
-      `https://api.github.com/repos/${username}/${repoName}/contents/index.html`,
-      {
-        message: "Upload from AsaanBuild 🚀",
-        content: Buffer.from(fileContent).toString("base64")
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json"
-        }
-      }
-    );
-
-    res.json({
-      success: true,
-      repoUrl: repo.data.html_url
-    });
-
-  } catch (error) {
-    console.error(error.response?.data || error.message);
-    res.status(500).json({ message: "Upload failed" });
-  }
-});
 //api to load saved code late
 // START SERVER
 app.listen(process.env.PORT, () => {

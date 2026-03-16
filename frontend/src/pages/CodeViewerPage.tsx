@@ -30,6 +30,24 @@ const projectId = state?.projectId; // NEW
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(
   projectId || null
 );
+ useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+
+  const token = params.get("token");
+  const projectIdParam = params.get("projectId");
+
+  if (token) {
+    localStorage.setItem("token", token);
+  }
+
+  if (projectIdParam && projectIdParam !== "undefined") {
+    setCurrentProjectId(Number(projectIdParam));
+  }
+
+  window.history.replaceState({}, document.title, "/codeviewer");
+}, []);
+
+
 
   // Download function stays the same
   const downloadCode = () => {
@@ -139,44 +157,7 @@ const projectId = state?.projectId; // NEW
     console.error("Auto save failed:", err);
   }
 };
-const uploadToGitHub = async () => {
-  if (!code || !currentProjectId) {
-    alert("Please save project first.");
-    return;
-  }
 
-  setUploading(true);
-
-  try {
-    const token = localStorage.getItem("token"); // your JWT
-
-    const res = await fetch("http://localhost:5000/api/github/upload", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        fileContent: code,
-        repoName: `asaanbuild-project-${currentProjectId}`,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      alert("🚀 Uploaded to GitHub successfully!");
-    } else {
-      alert(data.message || "Upload failed");
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert("GitHub upload error");
-  }
-
-  setUploading(false);
-};
   //  regenerte prompt
 //   const regeneratePrompt = async () => {
 
@@ -390,17 +371,7 @@ const uploadToGitHub = async () => {
               >
                 {saving ? "Saving..." : "Save"}
               </button>
-              <button
-  onClick={uploadToGitHub}
-  disabled={loading || uploading || !code}
-  className={`flex-shrink-0 px-4 py-2 rounded-md text-black transition ${
-    uploading
-      ? "bg-gray-400 cursor-not-allowed"
-      : "bg-black text-white hover:bg-gray-800"
-  }`}
->
-  {uploading ? "Uploading..." : "Upload to GitHub"}
-</button>
+              
             </div>
           </div>
 
