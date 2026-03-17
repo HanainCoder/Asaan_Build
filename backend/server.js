@@ -582,116 +582,99 @@ app.post("/api/project/:id/version", async (req, res) => {
   }
 });
 //for regerneraton
-// app.post("/api/project/:id/regenerate", async (req, res) => {
+app.post("/api/project/:id/edit", async (req, res) => {
 
-//   const { id } = req.params;
-//   const { prompt } = req.body;
+  const { id } = req.params;
+  const { instruction, updatedPrompt } = req.body;
 
-//   if (!prompt) {
-//     return res.status(400).json({ success:false, message:"Prompt required"});
-//   }
+  if (!instruction) {
+    return res.status(400).json({ success:false, message:"Instruction required"});
+  }
 
-//   try {
+  try {
 
-//     // get existing project code
-//     const projectResult = await pool.query(
-//       "SELECT generated_code FROM generated_projects WHERE id=$1",
-//       [id]
-//     );
+    // 1. GET EXISTING CODE
+    const projectResult = await pool.query(
+      "SELECT generated_code FROM generated_projects WHERE id=$1",
+      [id]
+    );
 
-//     if (projectResult.rows.length === 0) {
-//       return res.status(404).json({ success:false, message:"Project not found"});
-//     }
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({ success:false, message:"Project not found"});
+    }
 
-//     const existingCode = projectResult.rows[0].generated_code;
+    const existingCode = projectResult.rows[0].generated_code;
 
-//     // get latest version
-//     const versionResult = await pool.query(
-//       "SELECT MAX(version_number) as max FROM project_versions WHERE project_id=$1",
-//       [id]
-//     );
+    // 2. VERSION NUMBER
+    const versionResult = await pool.query(
+      "SELECT MAX(version_number) as max FROM project_versions WHERE project_id=$1",
+      [id]
+    );
 
-//     const nextVersion = (versionResult.rows[0].max || 0) + 1;
+    const nextVersion = (versionResult.rows[0].max || 0) + 1;
 
-//     // SHORT PROMPT (token saving)
-//     const fullPrompt = `
-// You are a precise code editor.
+    // 🔥 3. PERFECT PROMPT (THIS IS THE MAGIC)
+    const fullPrompt = `
+You are a professional frontend developer.
 
-// Your job is to modify EXISTING HTML with the SMALLEST possible change.
+You MUST edit the existing code, NOT create new website.
 
+CURRENT CODE:
+${existingCode}
 
-// USER REQUEST:
-// ${prompt}
+USER INSTRUCTION:
+${instruction}
 
-// EXISTING HTML:
-// ${existingCode}
+STRICT RULES:
+- Keep layout EXACTLY same
+- Keep 95% code unchanged
+- ONLY apply requested change
+- If color change → only change color classes
+- If text change → only change text
+- If add section → append without touching existing
+- DO NOT redesign anything
+- DO NOT remove anything
 
-// Editor Rules:
-// - Modify the EXISTING HTML with the SMALLEST possible change.
-// - Insert new sections ONLY at the placeholder: <!-- PLACEHOLDER: ADDITIONAL SECTIONS HERE -->
-// - Preserve all existing layout, structure, and Tailwind classes.
-// - Do NOT redesign or remove unrelated elements.
-// - If changing text, update only that text.
-// - If changing color, update only Tailwind classes.
-// - Keep 90–95% of the original HTML unchanged.
+Return FULL updated HTML only.
+`;
 
-// - Output ONLY the updated HTML.
-// - DO NOT add new <html>, <head>, <body> tags.
-// - Keep the page structure intact.
-// - Insert new sections inline at the placeholder.
+    res.setHeader("Content-Type", "text/plain");
 
-// `;
+    let fullCode = "";
 
-//     // streaming headers
-//     res.setHeader("Content-Type", "text/plain");
-//     res.setHeader("Cache-Control", "no-cache");
-//     res.setHeader("Connection", "keep-alive");
+    const stream = await client.responses.create({
+      model: "gpt-5-mini",
+      input: [{ role: "user", content: fullPrompt }],
+      stream: true
+    });
 
-//     let fullCode = "";
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta") {
+        res.write(event.delta);
+        fullCode += event.delta;
+      }
+    }
 
-//     const stream = await client.responses.create({
-//       model: "gpt-5-mini",
-//       input: [{ role: "user", content: fullPrompt }],
-//       stream: true
-//     });
+    res.end();
 
-//     for await (const event of stream) {
+    // 4. SAVE VERSION
+    await pool.query(
+      `INSERT INTO project_versions (project_id, version_number, code, prompt)
+       VALUES ($1,$2,$3,$4)`,
+      [id, nextVersion, fullCode, updatedPrompt || instruction]
+    );
 
-//       if (event.type === "response.output_text.delta") {
+    await pool.query(
+      `UPDATE generated_projects SET generated_code=$1 WHERE id=$2`,
+      [fullCode, id]
+    );
 
-//         res.write(event.delta);
-//         fullCode += event.delta;
+  } catch(err){
+    console.error(err);
+    res.end("Server error");
+  }
 
-//       }
-
-//     }
-
-//     res.end();
-
-//     // save version AFTER streaming
-//     await pool.query(
-//       `INSERT INTO project_versions
-//        (project_id, version_number, prompt, code)
-//        VALUES ($1,$2,$3,$4)`,
-//       [id, nextVersion, prompt, fullCode]
-//     );
-
-//     // update latest code
-//     await pool.query(
-//       `UPDATE generated_projects
-//        SET generated_code=$1, prompt=$2
-//        WHERE id=$3`,
-//       [fullCode, prompt, id]
-//     );
-
-//   } catch(err){
-//     console.error(err);
-//     res.end("Server error");
-//   }
-
-// });
-//uplaod file to github
-
+});
 
 
 

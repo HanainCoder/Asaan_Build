@@ -15,6 +15,7 @@ export function CodeViewerPage() {
 const prompt = state?.prompt || "Generate a basic landing page";
 const userId = state?.userId;
 const projectId = state?.projectId; // NEW
+const [editPrompt, setEditPrompt] = useState("");
 
   const { t } = useLanguage();
 
@@ -212,7 +213,54 @@ const projectId = state?.projectId; // NEW
 
 //   setLoading(false);
 // };
+  const handleEdit = async () => {
+  if (!currentProjectId || !editPrompt) return;
 
+  setLoading(true);
+  setCode("");
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/project/${currentProjectId}/edit`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instruction: editPrompt,  updatedPrompt: editPrompt  // ✅ add this
+ }),
+      }
+    );
+
+    // ✅ Safe check: if server streams, use reader
+    if (response.body) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        setCode(buffer);
+
+        if (iframeRef.current) {
+          iframeRef.current.srcdoc = buffer;
+        }
+      }
+
+    } else {
+      // fallback if server sends normal JSON
+      const data = await response.json();
+      setCode(data.code || "");
+      if (iframeRef.current) iframeRef.current.srcdoc = data.code || "";
+    }
+
+  } catch (err) {
+    console.error("Edit error:", err);
+  }
+
+  setLoading(false);
+};
 
   useEffect(() => {
     // NEW: if opening saved project → load from database
@@ -298,6 +346,7 @@ const projectId = state?.projectId; // NEW
 
     generate();
   }, [prompt, projectId]);
+  
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-317">
@@ -337,6 +386,24 @@ const projectId = state?.projectId; // NEW
 </div>
 
 */}
+<div className="flex gap-2 w-full mb-3">
+
+  <input
+    value={editPrompt}
+    onChange={(e) => setEditPrompt(e.target.value)}
+    placeholder="e.g. change button color to red"
+    className="flex-1 px-3 py-2 border rounded-md"
+  />
+
+  <button
+    onClick={handleEdit}
+    disabled={!currentProjectId || loading}
+    className="px-4 py-2 bg-purple-600 text-white rounded-md"
+  >
+    Apply
+  </button>
+
+</div>
             {/* Buttons */}
             <div className="flex gap-2">
               <select
