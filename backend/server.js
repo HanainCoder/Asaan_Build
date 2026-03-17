@@ -109,7 +109,7 @@ app.get(
       );
 
       // Only include projectId in URL if it exists
-      const redirectUrl = `http://localhost:5173/codeviewer?token=${token}` +
+      const redirectUrl = `http://localhost:5173/auth-success?token=${token}` +
         (projectId ? `&projectId=${projectId}` : "");
 
       res.redirect(redirectUrl);
