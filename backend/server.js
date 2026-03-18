@@ -689,7 +689,7 @@ app.get("/api/project/:id/versions", authenticateToken, async (req, res) => {
       `SELECT id, version_number, code, prompt, edit_type, created_at
        FROM project_versions
        WHERE project_id = $1
-       ORDER BY version_number ASC`,
+       ORDER BY version_number DESC`,
       [id]
     );
 
@@ -703,7 +703,7 @@ app.get("/api/project/:id/versions", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-//api to load saved code late
+//to get the code of that specific version in database
 app.get("/api/version/:id", async (req, res) => {
   const { id } = req.params;
 
