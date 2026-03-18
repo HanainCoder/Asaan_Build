@@ -301,9 +301,9 @@ app.post("/api/saveMyProject", async (req, res) => {
 
     // VERSION 1 SAVE
     await pool.query(
-      `INSERT INTO project_versions (project_id, code, version_number)
-      VALUES ($1, $2, $3)`,
-      [projectId, code, 1]
+      `INSERT INTO project_versions (project_id, code, version_number,  edit_type)
+      VALUES ($1, $2, $3, $4)`, //add edit type
+      [projectId, code, 1, "initial"]
      );
 
     const thumbnailPath = await createThumbnail(code, projectId);
@@ -560,9 +560,9 @@ app.post("/api/project/:id/version", async (req, res) => {
     // Insert new version (NOW includes prompt)
     await pool.query(
       `INSERT INTO project_versions 
-       (project_id, version_number, code)
-       VALUES ($1, $2, $3)`,
-      [id, nextVersion, code || null]
+       (project_id, version_number, code, edit_type)
+       VALUES ($1, $2, $3, $4)`,
+      [id, nextVersion, code || null, "code"]
     );
 
     // Update latest code in main table (keep this)
@@ -659,9 +659,9 @@ Return FULL updated HTML only.
 
     // 4. SAVE VERSION
     await pool.query(
-      `INSERT INTO project_versions (project_id, version_number, code, prompt)
-       VALUES ($1,$2,$3,$4)`,
-      [id, nextVersion, fullCode, updatedPrompt || instruction]
+      `INSERT INTO project_versions (project_id, version_number, code, prompt, edit_type)
+       VALUES ($1,$2,$3,$4, $5)`,
+      [id, nextVersion, fullCode, updatedPrompt || instruction, "prompt"]
     );
 
     await pool.query(
@@ -676,8 +676,56 @@ Return FULL updated HTML only.
 
 });
 
+// all versions of  a project
+// Get all versions of a project
+// 🔥 NEW: Get projects WITH versions (for Version Page ONLY)
+// app.get("/api/projects-with-versions", async (req, res) => {
+//   const { userId } = req.query;
 
+//   if (!userId) {
+//     return res.status(400).json({ success: false, message: "userId required" });
+//   }
 
+//   try {
+//     // 1. Get all projects with original prompt
+//     const projectsResult = await pool.query(
+//       `SELECT id, project_name, prompt, created_at
+//        FROM generated_projects
+//        WHERE user_id = $1
+//        ORDER BY created_at DESC`,
+//       [userId]
+//     );
+
+//     const projects = projectsResult.rows;
+
+//     // 2. Get all versions for those projects
+//     const versionsResult = await pool.query(
+//       `SELECT id, project_id, version_number, code, prompt, edit_type, created_at
+//        FROM project_versions
+//        ORDER BY version_number ASC`
+//     );
+
+//     const versions = versionsResult.rows;
+
+//     // 3. Attach versions to each project
+//     const finalData = projects.map(project => ({
+//       id: project.id,
+//       name: project.project_name,
+//       prompt: project.prompt, // ✅ original prompt
+//       date: project.created_at,
+//       versions: versions.filter(v => v.project_id === project.id)
+//     }));
+
+//     res.json({
+//       success: true,
+//       data: finalData
+//     });
+
+//   } catch (err) {
+//     console.error("PROJECT WITH VERSION ERROR:", err);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
 
 //api to load saved code late
 // START SERVER
