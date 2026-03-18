@@ -679,55 +679,55 @@ Return FULL updated HTML only.
 // all versions of  a project
 // Get all versions of a project
 // 🔥 NEW: Get projects WITH versions (for Version Page ONLY)
-// app.get("/api/projects-with-versions", async (req, res) => {
-//   const { userId } = req.query;
 
-//   if (!userId) {
-//     return res.status(400).json({ success: false, message: "userId required" });
-//   }
+// Get all versions of a specific project
+app.get("/api/project/:id/versions", authenticateToken, async (req, res) => {
+  const { id } = req.params;
 
-//   try {
-//     // 1. Get all projects with original prompt
-//     const projectsResult = await pool.query(
-//       `SELECT id, project_name, prompt, created_at
-//        FROM generated_projects
-//        WHERE user_id = $1
-//        ORDER BY created_at DESC`,
-//       [userId]
-//     );
+  try {
+    const result = await pool.query(
+      `SELECT id, version_number, code, prompt, edit_type, created_at
+       FROM project_versions
+       WHERE project_id = $1
+       ORDER BY version_number ASC`,
+      [id]
+    );
 
-//     const projects = projectsResult.rows;
+    res.json({
+      success: true,
+      versions: result.rows
+    });
 
-//     // 2. Get all versions for those projects
-//     const versionsResult = await pool.query(
-//       `SELECT id, project_id, version_number, code, prompt, edit_type, created_at
-//        FROM project_versions
-//        ORDER BY version_number ASC`
-//     );
-
-//     const versions = versionsResult.rows;
-
-//     // 3. Attach versions to each project
-//     const finalData = projects.map(project => ({
-//       id: project.id,
-//       name: project.project_name,
-//       prompt: project.prompt, // ✅ original prompt
-//       date: project.created_at,
-//       versions: versions.filter(v => v.project_id === project.id)
-//     }));
-
-//     res.json({
-//       success: true,
-//       data: finalData
-//     });
-
-//   } catch (err) {
-//     console.error("PROJECT WITH VERSION ERROR:", err);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
-
+  } catch (err) {
+    console.error("FETCH VERSIONS ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 //api to load saved code late
+app.get("/api/version/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT code FROM project_versions WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ success: false });
+    }
+
+    res.json({
+      success: true,
+      code: result.rows[0].code
+    });
+
+  } catch (err) {
+    console.error("FETCH VERSION ERROR:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);

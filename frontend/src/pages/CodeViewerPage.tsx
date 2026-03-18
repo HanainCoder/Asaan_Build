@@ -8,9 +8,16 @@ import Editor from "@monaco-editor/react";
 // ... keep all imports and existing code ...
 
 export function CodeViewerPage() {
-  const { state } = useLocation() as { 
-  state?: { prompt?: string; userId?: number; projectId?: number } 
+ const { state } = useLocation() as {
+  state?: {
+    prompt?: string;
+    userId?: number;
+    projectId?: number;
+    versionId?: number;
+  };
 };
+
+const versionId = state?.versionId;
 
 const prompt = state?.prompt || "Generate a basic landing page";
 const userId = state?.userId;
@@ -159,60 +166,8 @@ const [editPrompt, setEditPrompt] = useState("");
   }
 };
 
-  //  regenerte prompt
-//   const regeneratePrompt = async () => {
+  
 
-//   if (!currentProjectId || !promptInput) return;
-
-//   setLoading(true);
-//   setCode("");
-
-//   try {
-
-//     const response = await fetch(
-//       `http://localhost:5000/api/project/${currentProjectId}/regenerate`,
-//       {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json"
-//         },
-//         body: JSON.stringify({
-//           prompt: promptInput
-//         })
-//       }
-//     );
-
-//     const reader = response.body?.getReader();
-//     if (!reader) return;
-
-//     const decoder = new TextDecoder();
-
-//     let buffer = "";
-
-//     while (true) {
-
-//       const { done, value } = await reader.read();
-
-//       if (done) break;
-
-//       const chunk = decoder.decode(value);
-
-//       buffer += chunk;
-
-//       setCode(buffer);
-
-//       if (iframeRef.current) {
-//         iframeRef.current.srcdoc = buffer;
-//       }
-
-//     }
-
-//   } catch (err) {
-//     console.error("Regenerate error:", err);
-//   }
-
-//   setLoading(false);
-// };
   const handleEdit = async () => {
   if (!currentProjectId || !editPrompt) return;
 
@@ -263,6 +218,40 @@ const [editPrompt, setEditPrompt] = useState("");
 };
 
   useEffect(() => {
+    // 🔵 ADD THIS BLOCK (DO NOT REMOVE ANYTHING BELOW)
+  if (versionId) {
+  const loadVersion = async () => {
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/version/${versionId}`
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setCode(data.code);
+
+        if (codeRef.current) {
+          codeRef.current.textContent = data.code;
+        }
+
+        if (iframeRef.current) {
+          iframeRef.current.srcdoc = data.code;
+        }
+      }
+
+    } catch (err) {
+      console.error("Load version error", err);
+    }
+
+    setLoading(false);
+  };
+
+  loadVersion();
+  return; // 🚨 IMPORTANT: stop project + GPT flow
+}
     // NEW: if opening saved project → load from database
   if (projectId) {
     const loadSavedProject = async () => {
@@ -345,7 +334,7 @@ const [editPrompt, setEditPrompt] = useState("");
     };
 
     generate();
-  }, [prompt, projectId]);
+  }, [prompt, projectId, versionId]);
   
 
   return (
