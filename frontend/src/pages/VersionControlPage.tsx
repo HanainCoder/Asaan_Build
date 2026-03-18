@@ -66,7 +66,6 @@ export function VersionControlPage() {
     return { icon: "📄", color: "bg-gray-400" };
   };
 
-  // 🔥 Load Versions — UNCHANGED
   const handleProjectClick = async (projectId: number) => {
     if (!token) return;
 
@@ -101,7 +100,6 @@ export function VersionControlPage() {
     return <div className="p-6">Loading...</div>;
   }
 
-  // UNCHANGED
   const handleRestore = async (projectId: number, versionId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!token) return;
@@ -129,7 +127,6 @@ export function VersionControlPage() {
     }
   };
 
-  // UNCHANGED
   const handleDeleteVersion = async (projectId: number, versionId: number, versionNumber: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (versionNumber === 1) {
@@ -157,7 +154,6 @@ export function VersionControlPage() {
     }
   };
 
-  // UNCHANGED
   const handleDownload = (code: string, versionNumber: number, e: React.MouseEvent) => {
     e.stopPropagation();
     const blob = new Blob([code], { type: "text/html" });
@@ -169,7 +165,6 @@ export function VersionControlPage() {
     URL.revokeObjectURL(url);
   };
 
-  // UNCHANGED
   const handleCompareSelect = (v: any, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedForCompare((prev) => {
@@ -180,17 +175,14 @@ export function VersionControlPage() {
     });
   };
 
-  // UNCHANGED
   const handleCompare = () => {
     if (selectedForCompare.length !== 2) return;
     const sorted = [...selectedForCompare].sort((a, b) => a.version_number - b.version_number);
     setCompareModal({ v1: sorted[0], v2: sorted[1] });
   };
 
-  // UNCHANGED
   const getDiffLines = (code1: string, code2: string) => {
-    const diff = Diff.diffLines(code1, code2);
-    return diff;
+    return Diff.diffLines(code1, code2);
   };
 
   return (
@@ -203,10 +195,10 @@ export function VersionControlPage() {
         <main className="flex-1 p-6">
           <div className="max-w-5xl mx-auto">
 
-            {/* 🔥 Header — UNCHANGED */}
+            {/* Header */}
             <div className="text-center mb-10">
-              <div className="inline-flex items-center justify-center size-16 
-                bg-gradient-to-br from-blue-600 to-purple-600 
+              <div className="inline-flex items-center justify-center size-16
+                bg-gradient-to-br from-blue-600 to-purple-600
                 shadow-lg rounded-2xl mb-4">
                 <GitBranch className="size-8 text-white" />
               </div>
@@ -214,12 +206,12 @@ export function VersionControlPage() {
               <p className="text-gray-600">Click a version to open it in Code Viewer.</p>
             </div>
 
-            {/* 🔥 Projects — UNCHANGED */}
+            {/* Projects */}
             <div className="space-y-4">
               {projects.map((project) => (
                 <div key={project.id} className="bg-white rounded-2xl border shadow-sm">
 
-                  {/* Project Header — UNCHANGED */}
+                  {/* Project Header */}
                   <div
                     onClick={() => handleProjectClick(project.id)}
                     className="p-5 cursor-pointer flex justify-between items-center"
@@ -229,7 +221,6 @@ export function VersionControlPage() {
                       <p className="text-sm text-gray-500">{formatDate(project.date)}</p>
                     </div>
 
-                    {/* ✅ ADDED: stats badge alongside chevron */}
                     <div className="flex items-center gap-3">
                       {projectVersions[project.id] && (
                         <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-medium">
@@ -240,11 +231,11 @@ export function VersionControlPage() {
                     </div>
                   </div>
 
-                  {/* Versions — UNCHANGED wrapper */}
+                  {/* Versions */}
                   {openProject === project.id && (
                     <div className="border-t px-5 pb-5">
 
-                      {/* ✅ ADDED: Compare bar */}
+                      {/* Compare Bar */}
                       {selectedForCompare.length === 2 && (
                         <div className="mt-4 mb-2 flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2">
                           <span className="text-sm text-gray-600">
@@ -266,7 +257,7 @@ export function VersionControlPage() {
                         </div>
                       )}
 
-                      {/* UNCHANGED version cards */}
+                      {/* Version Cards */}
                       {projectVersions[project.id]?.map((v: any) => (
                         <div
                           key={v.id}
@@ -287,7 +278,7 @@ export function VersionControlPage() {
                             {/* Action Buttons */}
                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
 
-                              {/* ✅ ADDED: Compare checkbox */}
+                              {/* Compare Checkbox */}
                               <input
                                 type="checkbox"
                                 checked={!!selectedForCompare.find((x) => x.id === v.id)}
@@ -300,7 +291,20 @@ export function VersionControlPage() {
                                 className="size-4 cursor-pointer accent-indigo-600"
                               />
 
-                              {/* UNCHANGED: Restore */}
+                              {/* Preview Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!v.code) return alert("No code available.");
+                                  setPreviewVersion({ code: v.code, version: v.version_number });
+                                }}
+                                className="text-xs bg-purple-600 hover:bg-purple-700 text-black px-3 py-1.5 rounded-lg transition"
+                                title="Preview"
+                              >
+                                <Eye className="size-3.5" />
+                              </button>
+
+                              {/* Restore */}
                               <button
                                 onClick={(e) => handleRestore(project.id, v.id, e)}
                                 className="text-xs bg-blue-600 hover:bg-blue-700 text-black px-3 py-1.5 rounded-lg transition"
@@ -308,7 +312,7 @@ export function VersionControlPage() {
                                 Restore
                               </button>
 
-                              {/* UNCHANGED: Download */}
+                              {/* Download */}
                               <button
                                 onClick={(e) => handleDownload(v.code, v.version_number, e)}
                                 className="text-xs bg-green-600 hover:bg-green-700 text-black px-3 py-1.5 rounded-lg transition"
@@ -317,7 +321,7 @@ export function VersionControlPage() {
                                 <Download className="size-3.5" />
                               </button>
 
-                              {/* UNCHANGED: Delete */}
+                              {/* Delete */}
                               {v.version_number !== 1 && (
                                 <button
                                   onClick={(e) => handleDeleteVersion(project.id, v.id, v.version_number, e)}
@@ -333,7 +337,6 @@ export function VersionControlPage() {
                         </div>
                       ))}
 
-                      {/* UNCHANGED */}
                       {(!projectVersions[project.id] ||
                         projectVersions[project.id].length === 0) && (
                         <p className="text-gray-500 mt-4">No versions found.</p>
@@ -350,7 +353,32 @@ export function VersionControlPage() {
         </main>
       </div>
 
-      {/* ✅ ADDED: Compare Modal */}
+      {/* Preview Modal — outside all loops, at root level */}
+      {previewVersion && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-semibold text-lg">
+                Preview — Version {previewVersion.version}
+              </h3>
+              <button
+                onClick={() => setPreviewVersion(null)}
+                className="text-gray-500 hover:text-gray-800 text-xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <iframe
+              srcDoc={previewVersion.code}
+              className="flex-1 w-full rounded-b-2xl"
+              sandbox="allow-scripts"
+              title="Version Preview"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Compare Modal — outside all loops, at root level */}
       {compareModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl">
