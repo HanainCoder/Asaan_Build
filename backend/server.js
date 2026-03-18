@@ -728,6 +728,79 @@ app.get("/api/version/:id", async (req, res) => {
   }
 });
 
+// Restore a version as current project code
+app.post("/api/project/:id/restore/:versionId", authenticateToken, async (req, res) => {
+  const { id, versionId } = req.params;
+
+  try {
+    // Get the version code
+    const versionResult = await pool.query(
+  `SELECT code, version_number FROM project_versions WHERE id = $1 AND project_id = $2`,
+  [versionId, id]
+);
+
+    if (versionResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Version not found" });
+    }
+
+    const restoredCode = versionResult.rows[0].code;
+    const restoredFromNumber = versionResult.rows[0].version_number;
+
+    // Get next version number
+    const maxResult = await pool.query(
+      `SELECT MAX(version_number) as max FROM project_versions WHERE project_id = $1`,
+      [id]
+    );
+    const nextVersion = (maxResult.rows[0].max || 0) + 1;
+
+    // Save as new version with edit_type = "restored"
+    await pool.query(
+      `INSERT INTO project_versions (project_id, version_number, code, edit_type)
+       VALUES ($1, $2, $3, $4)`,
+      [id, nextVersion, restoredCode, `Restored from Version ${restoredFromNumber}`]
+    );
+
+    // Update main project code
+    await pool.query(
+      `UPDATE generated_projects SET generated_code = $1 WHERE id = $2`,
+      [restoredCode, id]
+    );
+
+    res.json({ success: true, message: "Version restored", version: nextVersion });
+
+  } catch (err) {
+    console.error("RESTORE ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+// Delete a specific version
+app.delete("/api/version/:id", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Don't allow deleting version 1 (initial)
+    const check = await pool.query(
+      `SELECT version_number FROM project_versions WHERE id = $1`,
+      [id]
+    );
+
+    if (check.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Version not found" });
+    }
+
+    if (check.rows[0].version_number === 1) {
+      return res.status(400).json({ success: false, message: "Cannot delete initial version" });
+    }
+
+    await pool.query(`DELETE FROM project_versions WHERE id = $1`, [id]);
+
+    res.json({ success: true, message: "Version deleted" });
+
+  } catch (err) {
+    console.error("DELETE VERSION ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);
