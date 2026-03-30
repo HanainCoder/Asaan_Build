@@ -387,7 +387,7 @@ const [editPrompt, setEditPrompt] = useState("");
   <button
     onClick={handleEdit}
     disabled={!currentProjectId || loading}
-    className="px-4 py-2 bg-purple-600 text-white rounded-md"
+    className="px-4 py-2 bg-purple-600 text-black rounded-md"
   >
     Apply
   </button>
