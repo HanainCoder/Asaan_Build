@@ -801,6 +801,92 @@ app.delete("/api/version/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+//upload to GitHUb
+app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
+  const { projectId } = req.body;
+
+  try {
+    // 1. Get user GitHub token
+    const userResult = await pool.query(
+      "SELECT github_token, github_username FROM users WHERE id=$1",
+      [req.user.id]
+    );
+
+    const user = userResult.rows[0];
+
+    if (!user.github_token) {
+      return res.status(400).json({
+        success: false,
+        message: "GitHub not connected"
+      });
+    }
+
+    // 2. Get project data
+    const projectResult = await pool.query(
+      "SELECT generated_code, project_name FROM generated_projects WHERE id=$1",
+      [projectId]
+    );
+
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    const project = projectResult.rows[0];
+
+    const repoName = project.project_name.replace(/\s+/g, "-").toLowerCase();
+
+    // 3. Create repo
+    await axios.post(
+      "https://api.github.com/user/repos",
+      {
+        name: repoName,
+        private: false
+      },
+      {
+        headers: {
+          Authorization: `token ${user.github_token}`
+        }
+      }
+    );
+
+    // 4. Upload index.html
+    const content = Buffer.from(project.generated_code).toString("base64");
+
+    await axios.put(
+      `https://api.github.com/repos/${user.github_username}/${repoName}/contents/index.html`,
+      {
+        message: "Initial commit from AsaanBuild",
+        content: content
+      },
+      {
+        headers: {
+          Authorization: `token ${user.github_token}`
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      repoUrl: `https://github.com/${user.github_username}/${repoName}`
+    });
+
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+
+    res.status(500).json({
+      success: false,
+      message: "GitHub upload failed"
+    });
+  }
+});
+app.get("/api/me", authenticateToken, async (req, res) => {
+  const result = await pool.query(
+    "SELECT id, email, github_token FROM users WHERE id=$1",
+    [req.user.id]
+  );
+
+  res.json(result.rows[0]);
+});
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);

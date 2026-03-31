@@ -35,6 +35,7 @@ const [editPrompt, setEditPrompt] = useState("");
   const codeRef = useRef<HTMLPreElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autoSavedRef = useRef(false);
+  const [githubConnected, setGithubConnected] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(
   projectId || null
 );
@@ -55,6 +56,32 @@ const [editPrompt, setEditPrompt] = useState("");
   window.history.replaceState({}, document.title, "/codeviewer");
 }, []);
 
+//use effetc for github
+useEffect(() => {
+  const checkGithub = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/me", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (data.github_token) {
+        setGithubConnected(true);
+      }
+
+    } catch (err) {
+      console.error("GitHub check error", err);
+    }
+  };
+
+  checkGithub();
+}, []);
 
 
   // Download function stays the same
@@ -216,6 +243,7 @@ const [editPrompt, setEditPrompt] = useState("");
 
   setLoading(false);
 };
+const handleConnectGithub = () => { window.location.href = "http://localhost:5000/api/auth/github"; }; 
 
   useEffect(() => {
     // 🔵 ADD THIS BLOCK (DO NOT REMOVE ANYTHING BELOW)
@@ -335,6 +363,46 @@ const [editPrompt, setEditPrompt] = useState("");
 
     generate();
   }, [prompt, projectId, versionId]);
+
+  //function to upload
+  const handleUploadGithub = async () => {
+  if (!currentProjectId) {
+    alert("Please save project first");
+    return;
+  }
+
+  setUploading(true);
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("http://localhost:5000/api/uploadToGithub", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        projectId: currentProjectId
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Uploaded to GitHub 🚀");
+      window.open(data.repoUrl, "_blank");
+    } else {
+      alert(data.message);
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Upload failed");
+  }
+
+  setUploading(false);
+};
   
 
   return (
@@ -415,6 +483,28 @@ const [editPrompt, setEditPrompt] = useState("");
               >
                 {loading ? "Generating..." : "Download"}
               </button>
+              {/* gor githb */}
+              {/* GitHub Button */}
+{githubConnected ? (
+  <button
+    onClick={handleUploadGithub}
+    disabled={uploading || !currentProjectId}
+    className={`flex-shrink-0 px-4 py-2 rounded-md text-black transition ${
+      uploading
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-black text-black hover:bg-gray-800"
+    }`}
+  >
+    {uploading ? "Uploading..." : "Upload to GitHub"}
+  </button>
+) : (
+  <button
+    onClick={handleConnectGithub}
+    className="flex-shrink-0 px-4 py-2 rounded-md bg-gray-800 text-black hover:bg-black"
+  >
+    Connect GitHub
+  </button>
+)}
 
               <button
                 onClick={saveCode}

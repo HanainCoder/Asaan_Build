@@ -11,7 +11,7 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const [showPassword, setShowPassword] = useState(false); //  NEW
+  const [showPassword, setShowPassword] = useState(false); //new
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); //  NEW
 
   const { register } = useAuth();

@@ -8,7 +8,7 @@ import { Mic, Send, Sparkles, Lightbulb } from 'lucide-react';
 
 export function PromptPage() {
   const { t, language } = useLanguage();
-  const { user } = useAuth();                     // ✅ GET LOGGED-IN USER
+  const { user } = useAuth();       // ✅ GET LOGGED-IN USER
   const navigate = useNavigate();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
