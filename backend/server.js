@@ -901,7 +901,7 @@ app.get("/api/templates", async (req, res) => {
 
     if (category && category !== "All") {
       result = await pool.query(
-        `SELECT id, title, category, description, thumbnail_color, badge
+        `SELECT id, title, category, description, thumbnail_color, badge, preview_html
          FROM templates
          WHERE is_active = TRUE AND category = $1
          ORDER BY created_at DESC`,
@@ -909,7 +909,7 @@ app.get("/api/templates", async (req, res) => {
       );
     } else {
       result = await pool.query(
-        `SELECT id, title, category, description, thumbnail_color, badge
+        `SELECT id, title, category, description, thumbnail_color, badge, preview_html
          FROM templates
          WHERE is_active = TRUE
          ORDER BY created_at DESC`
@@ -989,6 +989,10 @@ Output:
     res.end(`Error: ${err.message}`);
   }
 });
+//for prompt engineering autu suggestions
+
+
+
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);

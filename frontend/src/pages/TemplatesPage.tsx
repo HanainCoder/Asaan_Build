@@ -14,6 +14,7 @@ interface Template {
   description: string;
   thumbnail_color: string;
   badge: 'new' | 'popular' | null;
+  preview_html?: string;  // ← sirf yeh add karo
 }
 
 const CATEGORIES = ['All', 'Business', 'Portfolio', 'Event', 'Shop', 'Restaurant'];
@@ -255,14 +256,24 @@ export function TemplatesPage() {
             </div>
 
             {/* Colour thumbnail preview */}
-            <div
-              className="w-full h-32 rounded-lg mb-4 flex items-center justify-center"
-              style={{ backgroundColor: previewTemplate.thumbnail_color }}
-            >
-              <span className="text-sm font-medium opacity-70">
-                {previewTemplate.title}
-              </span>
-            </div>
+            {/* Live preview */}
+<div className="w-full h-48 rounded-lg mb-4 overflow-hidden border border-gray-200 relative">
+  {previewTemplate.preview_html ? (
+    <iframe
+      srcDoc={previewTemplate.preview_html}
+      scrolling="no"
+      className="absolute top-0 left-0 border-0 pointer-events-none"
+      style={{ width: '200%', height: '200%', transform: 'scale(0.5)', transformOrigin: 'top left' }}
+    />
+  ) : (
+    <div
+      className="w-full h-full flex items-center justify-center"
+      style={{ backgroundColor: previewTemplate.thumbnail_color }}
+    >
+      <span className="text-sm font-medium opacity-70">{previewTemplate.title}</span>
+    </div>
+  )}
+</div>
 
             {/* Extra instructions input */}
             <div className="mb-4">
@@ -315,25 +326,34 @@ function TemplateCard({ template, isGenerating, onPreview, onUse }: TemplateCard
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
 
       {/* Thumbnail */}
-      <div
-        className="h-36 flex items-center justify-center relative"
-        style={{ backgroundColor: template.thumbnail_color }}
-      >
-        <span className="text-sm font-semibold opacity-60">{template.title}</span>
+      <div className="h-36 relative overflow-hidden">
+  {template.preview_html ? (
+    <iframe
+      srcDoc={template.preview_html}
+      scrolling="no"
+      className="absolute top-0 left-0 w-full h-full border-0 pointer-events-none"
+      style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
+    />
+  ) : (
+    <div
+      className="w-full h-full flex items-center justify-center"
+      style={{ backgroundColor: template.thumbnail_color }}
+    >
+      <span className="text-sm font-semibold opacity-60">{template.title}</span>
+    </div>
+  )}
 
-        {/* Badge */}
-        {template.badge && (
-          <span
-            className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-semibold ${
-              template.badge === 'popular'
-                ? 'bg-orange-100 text-orange-700'
-                : 'bg-green-100 text-green-700'
-            }`}
-          >
-            {template.badge === 'popular' ? 'Popular' : 'New'}
-          </span>
-        )}
-      </div>
+  {/* Badge */}
+  {template.badge && (
+    <span className={`absolute top-3 right-3 z-10 px-2 py-1 rounded-full text-xs font-semibold ${
+      template.badge === 'popular'
+        ? 'bg-orange-100 text-orange-700'
+        : 'bg-green-100 text-green-700'
+    }`}>
+      {template.badge === 'popular' ? 'Popular' : 'New'}
+    </span>
+  )}
+</div>
 
       {/* Card body */}
       <div className="p-4">
