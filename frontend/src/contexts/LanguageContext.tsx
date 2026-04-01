@@ -186,7 +186,10 @@ const translations: Record<Language, Record<string, string>> = {
 };
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en');
+  const [language, setLanguageState] = useState<Language>(() => {
+  const saved = localStorage.getItem('language');
+  return saved === 'ur' || saved === 'en' ? saved : 'en';
+});
   const direction: Direction = language === 'ur' ? 'rtl' : 'ltr';
 
   useEffect(() => {
