@@ -887,6 +887,108 @@ app.get("/api/me", authenticateToken, async (req, res) => {
 
   res.json(result.rows[0]);
 });
+//for templates
+// ============================================
+// TEMPLATES ROUTES
+// ============================================
+
+// GET all templates (with optional category filter)
+app.get("/api/templates", async (req, res) => {
+  const { category } = req.query;
+
+  try {
+    let result;
+
+    if (category && category !== "All") {
+      result = await pool.query(
+        `SELECT id, title, category, description, thumbnail_color, badge
+         FROM templates
+         WHERE is_active = TRUE AND category = $1
+         ORDER BY created_at DESC`,
+        [category]
+      );
+    } else {
+      result = await pool.query(
+        `SELECT id, title, category, description, thumbnail_color, badge
+         FROM templates
+         WHERE is_active = TRUE
+         ORDER BY created_at DESC`
+      );
+    }
+
+    res.json({ success: true, templates: result.rows });
+
+  } catch (err) {
+    console.error("FETCH TEMPLATES ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// POST generate from template — reuses your EXACT streaming logic
+app.post("/api/generateFromTemplate", async (req, res) => {
+  const { templateId, extraInstructions } = req.body;
+
+  if (!templateId) {
+    return res.status(400).json({ success: false, message: "templateId required" });
+  }
+
+  try {
+    // Fetch the stored template prompt from DB
+    const templateResult = await pool.query(
+      `SELECT prompt, title FROM templates WHERE id = $1 AND is_active = TRUE`,
+      [templateId]
+    );
+
+    if (templateResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Template not found" });
+    }
+
+    const { prompt: templatePrompt, title } = templateResult.rows[0];
+
+    // Combine template prompt with any extra user instructions
+    // NAYA
+    const finalPrompt = `
+You are an AI web developer.
+User request: "${templatePrompt}${extraInstructions ? `. ${extraInstructions}` : ''}"
+
+Requirements:
+- Generate ONLY ONE landing page preview section.
+- The section must look complete and professional.
+- Keep the section medium sized (not a full page).
+- Do NOT generate multiple sections.
+Output:
+- Return a complete HTML file.
+- Load Tailwind via CDN.
+- Respond line-by-line as if streaming.
+- Output ONLY raw HTML code. No explanations, no markdown, no backticks, no notes.
+- Do NOT write anything before <!DOCTYPE html> or after </html>.
+`
+;
+
+    // ---- EXACT SAME STREAMING LOGIC AS /api/generateLandingStream ----
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const stream = await client.responses.create({
+      model: "gpt-5-mini",
+      input: [{ role: "user", content: finalPrompt }],
+      stream: true,
+    });
+
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta") {
+        res.write(event.delta);
+      }
+    }
+
+    res.end();
+
+  } catch (err) {
+    console.error("GENERATE FROM TEMPLATE ERROR:", err);
+    res.end(`Error: ${err.message}`);
+  }
+});
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);

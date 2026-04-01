@@ -56,14 +56,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* <Route
-        path="/templates"
-        element={
-          <ProtectedRoute>
-            <TemplatesPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* 
       <Route
         path="/template/:id"
         element={
@@ -80,6 +73,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       /> */}
+      <Route
+        path="/templates"
+        element={
+          <ProtectedRoute>
+            <TemplatesPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
        path="/auth-success"
       element={<AuthSuccess />} />

@@ -14,10 +14,14 @@ export function CodeViewerPage() {
     userId?: number;
     projectId?: number;
     versionId?: number;
+    templateId?: string;           // ← add
+   extraInstructions?: string;   
   };
 };
 
 const versionId = state?.versionId;
+const templateId = state?.templateId;
+const extraInstructions = state?.extraInstructions || '';
 
 const prompt = state?.prompt || "Generate a basic landing page";
 const userId = state?.userId;
@@ -316,11 +320,20 @@ const handleConnectGithub = () => { window.location.href = "http://localhost:500
     setCode("");
 
     const generate = async () => {
-      const response = await fetch("http://localhost:5000/api/generateLandingStream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, userId }),
-      });
+      const response = await fetch(
+  templateId
+    ? "http://localhost:5000/api/generateFromTemplate"
+    : "http://localhost:5000/api/generateLandingStream",
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(
+      templateId
+        ? { templateId, extraInstructions }
+        : { prompt, userId }
+    ),
+  }
+);
 
       const reader = response.body?.getReader();
       if (!reader) return;

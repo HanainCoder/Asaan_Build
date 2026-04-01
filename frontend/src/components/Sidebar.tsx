@@ -31,6 +31,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { icon: HelpCircle, label: t(' Version Control '), path: '/version' },
     { icon: Settings, label: t('settings'), path: '/settings' },
     { icon: HelpCircle, label: t('support'), path: '/support' },
+    { icon: HelpCircle, label: t('templates'), path: '/templates' },
+
 
   ];
 
