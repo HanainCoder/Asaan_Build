@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
@@ -18,6 +18,8 @@ export function SupportPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [message, setMessage] = useState('');
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [search, setSearch] = useState("");
 
   const faqs = [
   {
@@ -57,6 +59,23 @@ export function SupportPage() {
       'App generate karne ke baad aap code download karke Vercel, Netlify, ya AWS par deploy kar sakte hain. Hum documentation mein complete deployment guides bhi dete hain.',
   },
 ];
+   const filteredFaqs = faqs.filter(f =>
+  f.question.toLowerCase().includes(search.toLowerCase()) ||
+  f.answer.toLowerCase().includes(search.toLowerCase())
+);
+// onboarding steps
+const DEFAULT_STEPS = [
+  { id: 1, title: "Create your first project", done: false },
+  { id: 2, title: "Use a template", done: false },
+  { id: 3, title: "Edit your code", done: false },
+  { id: 4, title: "Save a version", done: false },
+  { id: 5, title: "Upload to GitHub", done: false }
+];
+
+const [steps, setSteps] = useState(() => {
+  const saved = localStorage.getItem("onboardingSteps");
+  return saved ? JSON.parse(saved) : DEFAULT_STEPS;
+});
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,6 +83,21 @@ export function SupportPage() {
     setMessage('');
     alert('Thank you for your message! Our support team will get back to you soon.');
   };
+  const completed = steps.filter(s => s.done).length;
+  const progress = (completed / steps.length) * 100;
+
+  const toggleStep = (id) => {
+  const updated = steps.map(s =>
+    s.id === id ? { ...s, done: !s.done } : s
+  );
+  setSteps(updated);
+  localStorage.setItem("onboardingSteps", JSON.stringify(updated));
+};
+  //for  Welcome
+  useEffect(() => {
+  const onboarded = localStorage.getItem("onboarded");
+  if (!onboarded) setShowWelcome(true);
+}, []);
 //ui 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-317">
@@ -72,6 +106,27 @@ export function SupportPage() {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main className="flex-1 p-6 lg:p-8">
           <div className="max-w-4xl mx-auto">
+            {showWelcome && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl w-96 text-center">
+      <h2 className="text-xl font-semibold mb-2">
+        Welcome to AsaanBuild 🚀
+      </h2>
+      <p className="text-gray-600 mb-4">
+        Let’s build your first website
+      </p>
+      <button
+        onClick={() => {
+          localStorage.setItem("onboarded", "true");
+          setShowWelcome(false);
+        }}
+        className="px-6 py-2 bg-blue-600 text-white rounded-lg"
+      >
+        Start
+      </button>
+    </div>
+  </div>
+)}
             {/* Header */}
             <div className="text-center mb-12">
               <div className="inline-flex items-center justify-center size-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
@@ -82,6 +137,27 @@ export function SupportPage() {
                 Get help, find answers to common questions, and learn how to use AsaanBuild
               </p>
             </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-8">
+  <h2 className="mb-4 font-semibold">Getting Started</h2>
+
+  <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+    <div
+      className="bg-blue-600 h-2 rounded-full"
+      style={{ width: `${progress}%` }}
+    />
+  </div>
+
+  {steps.map(step => (
+    <div
+      key={step.id}
+      onClick={() => toggleStep(step.id)}
+      className="flex justify-between p-3 border rounded-lg mb-2 cursor-pointer hover:bg-gray-50"
+    >
+      <span>{step.title}</span>
+      <span>{step.done ? "✅" : "⭕"}</span>
+    </div>
+  ))}
+</div>
 
             {/* How to Use Guide */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200 mb-8">
@@ -133,12 +209,34 @@ export function SupportPage() {
                 </div>
               </div>
             </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-8">
+  <h2 className="mb-4 font-semibold">Video Tutorials</h2>
+
+  <div className="grid md:grid-cols-2 gap-4">
+    <iframe
+      className="w-full h-48 rounded-lg"
+      src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+      allowFullScreen
+    />
+    <iframe
+      className="w-full h-48 rounded-lg"
+      src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+      allowFullScreen
+    />
+  </div>
+</div>
 
             {/* FAQs */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200 mb-8">
               <h2 className="mb-6">{t('faqs')}</h2>
+              <input
+  placeholder="Search help..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="w-full mb-4 px-4 py-2 border rounded-lg"
+/>
               <div className="space-y-3">
-                {faqs.map((faq) => (
+                {filteredFaqs.map((faq) => (
                   <div
                     key={faq.id}
                     className="border border-gray-200 rounded-lg overflow-hidden"
