@@ -68,7 +68,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 w-317">
+    <div className="min-h-screen flex flex-col bg-gray-50 w-full">
       <Header onMenuClick={() => setSidebarOpen(true)} showMenu />
       <div className="flex flex-1">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
