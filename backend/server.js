@@ -880,20 +880,10 @@ app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
       Authorization: `token ${user.github_token}`
     };
 
-    // 3. CHECK IF REPO EXISTS
-    let repoExists = true;
-
+    // ===============================
+    // 3. CREATE REPO (SAFE FIX)
+    // ===============================
     try {
-      await axios.get(
-        `https://api.github.com/repos/${user.github_username}/${repoName}`,
-        { headers }
-      );
-    } catch (err) {
-      repoExists = false;
-    }
-
-    // CREATE REPO ONLY IF NOT EXISTS
-    if (!repoExists) {
       await axios.post(
         "https://api.github.com/user/repos",
         {
@@ -902,9 +892,16 @@ app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
         },
         { headers }
       );
+    } catch (err) {
+      // Ignore ONLY "repo already exists"
+      if (err.response?.status !== 422) {
+        throw err;
+      }
     }
 
-    // 4. CHECK IF FILE EXISTS (GET SHA)
+    // ===============================
+    // 4. GET FILE SHA (if exists)
+    // ===============================
     let sha = null;
 
     try {
@@ -918,7 +915,9 @@ app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
       sha = null;
     }
 
-    // 5. Upload / Update index.html
+    // ===============================
+    // 5. UPLOAD / UPDATE FILE
+    // ===============================
     const content = Buffer.from(project.generated_code).toString("base64");
 
     const body = {
@@ -927,7 +926,7 @@ app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
     };
 
     if (sha) {
-      body.sha = sha; // required for update
+      body.sha = sha;
     }
 
     await axios.put(
