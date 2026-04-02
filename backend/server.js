@@ -149,7 +149,8 @@ app.get(
         { expiresIn: "1d" }
       );
 
-      const redirectUrl = `http://localhost:5173/codeviewer?token=${token}` +
+     const redirectUrl =
+  `http://localhost:5173/auth-success?token=${token}` +
   (projectId ? `&projectId=${projectId}` : "");
 
       res.redirect(redirectUrl);
