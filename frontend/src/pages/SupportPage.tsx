@@ -100,12 +100,12 @@ const [steps, setSteps] = useState(() => {
 }, []);
 //ui 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 w-317">
+    <div className="min-h-screen flex flex-col bg-gray-50 w-full">
       <Header onMenuClick={() => setSidebarOpen(true)} showMenu />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main className="flex-1 p-6 lg:p-8">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             {showWelcome && (
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
     <div className="bg-white p-6 rounded-xl w-96 text-center">
