@@ -247,7 +247,11 @@ useEffect(() => {
 
   setLoading(false);
 };
-const handleConnectGithub = () => { window.location.href = "http://localhost:5000/api/auth/github"; }; 
+const handleConnectGithub = () => { 
+  const token = localStorage.getItem("token");
+
+  window.location.href = `http://localhost:5000/api/auth/github?token=${token}&projectId=${currentProjectId}`;
+}; 
 
   useEffect(() => {
     // 🔵 ADD THIS BLOCK (DO NOT REMOVE ANYTHING BELOW)

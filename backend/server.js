@@ -75,11 +75,13 @@ app.get(
 
 // Start GitHub Login
 app.get("/api/auth/github", (req, res, next) => {
-  const { projectId } = req.query;
+  const { projectId, token } = req.query;
+
+  const state = JSON.stringify({ projectId, token });
 
   const authenticator = githubPassport.authenticate("github", {
     scope: ["user:email", "repo"],
-    state: projectId
+    state
   });
 
   authenticator(req, res, next);
@@ -92,9 +94,48 @@ app.get(
   githubPassport.authenticate("github", { session: false }),
   async (req, res) => {
     try {
-      const projectId = req.query.state || null; // default to null if undefined
+      let projectId = null;
+      let userId = null;
 
-      // Update user to mark GitHub connected
+      // ✅ Parse state safely
+      if (req.query.state) {
+        try {
+          const parsed = JSON.parse(req.query.state);
+          projectId = parsed.projectId;
+          
+          if (parsed.token) {
+            const decoded = jwt.verify(parsed.token, process.env.JWT_SECRET);
+            userId = decoded.id;
+          }
+        } catch (e) {
+          projectId = req.query.state;
+        }
+      }
+
+      // 🔥 THIS IS THE ONLY NEW LOGIC
+      if (userId) {
+        // 👉 CONNECT MODE (Google / Email users)
+        await pool.query(
+          `UPDATE users
+           SET github_token = $1,
+               github_username = $2
+           WHERE id = $3`,
+          [req.user.github_token, req.user.github_username, userId]
+        );
+
+        const token = jwt.sign(
+          { id: userId },
+          process.env.JWT_SECRET,
+          { expiresIn: "1d" }
+        );
+
+        return res.redirect(
+          `http://localhost:5173/auth-success?token=${token}` +
+          (projectId ? `&projectId=${projectId}` : "")
+        );
+      }
+
+      // ✅ EXISTING FLOW (GitHub login) — unchanged
       await pool.query(
         `UPDATE users
          SET github_token = $1, github_username = $2
@@ -108,8 +149,8 @@ app.get(
         { expiresIn: "1d" }
       );
 
-      // Only include projectId in URL if it exists
-      const redirectUrl = `http://localhost:5173/auth-success?token=${token}` +
+      const redirectUrl =
+        `http://localhost:5173/auth-success?token=${token}` +
         (projectId ? `&projectId=${projectId}` : "");
 
       res.redirect(redirectUrl);
