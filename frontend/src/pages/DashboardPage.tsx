@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Sidebar } from '../components/Sidebar';
@@ -19,6 +19,7 @@ export function DashboardPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [githubConnected, setGithubConnected] = useState(false);
 
   const recentActivities = [
     { id: 1, action: 'Created E-commerce Store', time: '2 hours ago' },
@@ -26,6 +27,37 @@ export function DashboardPage() {
     { id: 3, action: 'Generated Restaurant App', time: '1 day ago' },
     { id: 4, action: 'Deployed Blog Platform', time: '2 days ago' },
   ];
+  useEffect(() => {
+  const checkGithub = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (data.github_token) {
+        setGithubConnected(true);
+      } else {
+        setGithubConnected(false);
+      }
+    } catch (err) {
+      console.error("GitHub check error", err);
+    }
+  };
+
+  checkGithub();
+}, []);
+const handleConnectGithub = () => {
+  const token = localStorage.getItem("token");
+
+  window.location.href = `http://localhost:5000/api/auth/github?token=${token}`;
+};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,6 +73,23 @@ export function DashboardPage() {
                 Here's what's happening with your projects today.
               </p>
             </div>
+            <div className="mt-4">
+  {!githubConnected ? (
+    <button
+      onClick={handleConnectGithub}
+      className="px-4 py-2 bg-black text-black rounded-md hover:bg-gray-800"
+    >
+      Connect to GitHub
+    </button>
+  ) : (
+    <button
+      disabled
+      className="px-4 py-2 bg-green-500 text-black rounded-md cursor-not-allowed"
+    >
+      GitHub Connected ✅
+    </button>
+  )}
+</div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 group">

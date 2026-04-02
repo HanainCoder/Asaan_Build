@@ -149,9 +149,8 @@ app.get(
         { expiresIn: "1d" }
       );
 
-      const redirectUrl =
-        `http://localhost:5173/auth-success?token=${token}` +
-        (projectId ? `&projectId=${projectId}` : "");
+      const redirectUrl = `http://localhost:5173/codeviewer?token=${token}` +
+  (projectId ? `&projectId=${projectId}` : "");
 
       res.redirect(redirectUrl);
 
@@ -876,34 +875,64 @@ app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
 
     const repoName = project.project_name.replace(/\s+/g, "-").toLowerCase();
 
-    // 3. Create repo
-    await axios.post(
-      "https://api.github.com/user/repos",
-      {
-        name: repoName,
-        private: false
-      },
-      {
-        headers: {
-          Authorization: `token ${user.github_token}`
-        }
-      }
-    );
+    const headers = {
+      Authorization: `token ${user.github_token}`
+    };
 
-    // 4. Upload index.html
+    // 3. CHECK IF REPO EXISTS
+    let repoExists = true;
+
+    try {
+      await axios.get(
+        `https://api.github.com/repos/${user.github_username}/${repoName}`,
+        { headers }
+      );
+    } catch (err) {
+      repoExists = false;
+    }
+
+    // CREATE REPO ONLY IF NOT EXISTS
+    if (!repoExists) {
+      await axios.post(
+        "https://api.github.com/user/repos",
+        {
+          name: repoName,
+          private: false
+        },
+        { headers }
+      );
+    }
+
+    // 4. CHECK IF FILE EXISTS (GET SHA)
+    let sha = null;
+
+    try {
+      const fileRes = await axios.get(
+        `https://api.github.com/repos/${user.github_username}/${repoName}/contents/index.html`,
+        { headers }
+      );
+
+      sha = fileRes.data.sha;
+    } catch (err) {
+      sha = null;
+    }
+
+    // 5. Upload / Update index.html
     const content = Buffer.from(project.generated_code).toString("base64");
+
+    const body = {
+      message: sha ? "Update from AsaanBuild" : "Initial commit from AsaanBuild",
+      content: content
+    };
+
+    if (sha) {
+      body.sha = sha; // required for update
+    }
 
     await axios.put(
       `https://api.github.com/repos/${user.github_username}/${repoName}/contents/index.html`,
-      {
-        message: "Initial commit from AsaanBuild",
-        content: content
-      },
-      {
-        headers: {
-          Authorization: `token ${user.github_token}`
-        }
-      }
+      body,
+      { headers }
     );
 
     res.json({
@@ -925,7 +954,6 @@ app.get("/api/me", authenticateToken, async (req, res) => {
     "SELECT id, email, github_token FROM users WHERE id=$1",
     [req.user.id]
   );
-
   res.json(result.rows[0]);
 });
 //for templates

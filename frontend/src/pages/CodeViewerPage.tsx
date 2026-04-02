@@ -247,11 +247,7 @@ useEffect(() => {
 
   setLoading(false);
 };
-const handleConnectGithub = () => { 
-  const token = localStorage.getItem("token");
 
-  window.location.href = `http://localhost:5000/api/auth/github?token=${token}&projectId=${currentProjectId}`;
-}; 
 
   useEffect(() => {
     // 🔵 ADD THIS BLOCK (DO NOT REMOVE ANYTHING BELOW)
@@ -502,27 +498,26 @@ const handleConnectGithub = () => {
               </button>
               {/* gor githb */}
               {/* GitHub Button */}
-{githubConnected ? (
-  <button
-    onClick={handleUploadGithub}
-    disabled={uploading || !currentProjectId}
-    className={`flex-shrink-0 px-4 py-2 rounded-md text-black transition ${
-      uploading
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-black text-black hover:bg-gray-800"
-    }`}
-  >
-    {uploading ? "Uploading..." : "Upload to GitHub"}
-  </button>
-) : (
-  <button
-    onClick={handleConnectGithub}
-    className="flex-shrink-0 px-4 py-2 rounded-md bg-gray-800 text-black hover:bg-black"
-  >
-    Connect GitHub
-  </button>
+              {!githubConnected && (
+  <p className="text-sm text-gray-500 mb-2">
+    Connect GitHub from Dashboard to enable uploads
+  </p>
 )}
-
+<button
+  onClick={handleUploadGithub}
+  disabled={!githubConnected || uploading || !currentProjectId}
+  className={`flex-shrink-0 px-4 py-2 rounded-md transition ${
+    !githubConnected || uploading || !currentProjectId
+      ? "bg-gray-400 cursor-not-allowed"
+      : "bg-black hover:bg-gray-800 text-black"
+  }`}
+>
+  {uploading
+    ? "Uploading..."
+    : githubConnected
+    ? "Upload to GitHub 🚀"
+    : "Connect GitHub in Dashboard"}
+</button>
               <button
                 onClick={saveCode}
                 disabled={loading || saving || !code}
