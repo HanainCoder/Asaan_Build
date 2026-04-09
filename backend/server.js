@@ -1059,6 +1059,48 @@ Output:
   }
 });
 //for prompt engineering autu suggestions
+app.get("/api/prompts/recent", authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT prompt, created_at
+       FROM generated_projects
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 3`,
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      prompts: result.rows
+    });
+
+  } catch (err) {
+    console.error("FETCH RECENT PROMPTS ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+//all prompts for prompt history page
+app.get("/api/prompts/all", authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT prompt, created_at
+       FROM generated_projects
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      prompts: result.rows
+    });
+
+  } catch (err) {
+    console.error("FETCH ALL PROMPTS ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 
 
 

@@ -64,17 +64,23 @@ export function SupportPage() {
   f.answer.toLowerCase().includes(search.toLowerCase())
 );
 // onboarding steps
+  type OnboardingStep = {
+    id: number;
+    title: string;
+    done: boolean;
+  };
+
 const DEFAULT_STEPS = [
   { id: 1, title: "Create your first project", done: false },
   { id: 2, title: "Use a template", done: false },
   { id: 3, title: "Edit your code", done: false },
   { id: 4, title: "Save a version", done: false },
   { id: 5, title: "Upload to GitHub", done: false }
-];
+  ];
 
-const [steps, setSteps] = useState(() => {
+  const [steps, setSteps] = useState<OnboardingStep[]>(() => {
   const saved = localStorage.getItem("onboardingSteps");
-  return saved ? JSON.parse(saved) : DEFAULT_STEPS;
+    return saved ? (JSON.parse(saved) as OnboardingStep[]) : DEFAULT_STEPS;
 });
 
 
@@ -83,11 +89,11 @@ const [steps, setSteps] = useState(() => {
     setMessage('');
     alert('Thank you for your message! Our support team will get back to you soon.');
   };
-  const completed = steps.filter(s => s.done).length;
+  const completed = steps.filter((s: OnboardingStep) => s.done).length;
   const progress = (completed / steps.length) * 100;
 
-  const toggleStep = (id) => {
-  const updated = steps.map(s =>
+  const toggleStep = (id: number) => {
+  const updated = steps.map((s: OnboardingStep) =>
     s.id === id ? { ...s, done: !s.done } : s
   );
   setSteps(updated);
@@ -129,7 +135,7 @@ const [steps, setSteps] = useState(() => {
 )}
             {/* Header */}
             <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center size-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
+              <div className="inline-flex items-center justify-center size-16 bg-linear-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
                 <HelpCircle className="size-8 text-white" />
               </div>
               <h1 className="mb-3">{t('support')}</h1>
@@ -147,7 +153,7 @@ const [steps, setSteps] = useState(() => {
     />
   </div>
 
-  {steps.map(step => (
+  {steps.map((step: OnboardingStep) => (
     <div
       key={step.id}
       onClick={() => toggleStep(step.id)}
@@ -164,7 +170,7 @@ const [steps, setSteps] = useState(() => {
               <h2 className="mb-6">{t('howToUse')}</h2>
               <div className="space-y-6">
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="size-12 rounded-xl bg-blue-100 flex items-center justify-center">
                       <Sparkles className="size-6 text-blue-600" />
                     </div>
@@ -179,7 +185,7 @@ const [steps, setSteps] = useState(() => {
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="size-12 rounded-xl bg-purple-100 flex items-center justify-center">
                       <Code className="size-6 text-purple-600" />
                     </div>
@@ -194,7 +200,7 @@ const [steps, setSteps] = useState(() => {
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="size-12 rounded-xl bg-green-100 flex items-center justify-center">
                       <Zap className="size-6 text-green-600" />
                     </div>
@@ -265,7 +271,7 @@ const [steps, setSteps] = useState(() => {
             </div>
 
             {/* Contact Support */}
-            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+            <div className="bg-linear-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
               <div className="flex items-center gap-3 mb-6">
                 <MessageSquare className="size-6" />
                 <h2 className="text-white">{t('contactSupport')}</h2>
