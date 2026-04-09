@@ -32,6 +32,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { icon: Settings, label: t('settings'), path: '/settings' },
     { icon: HelpCircle, label: t('support'), path: '/support' },
     { icon: HelpCircle, label: t('Templates Hub'), path: '/templates' },
+     { icon: HelpCircle, label: t('Prompt History Page'), path: '/prompt-history' },
 
 
   ];

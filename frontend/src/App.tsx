@@ -17,6 +17,7 @@ import { SupportPage } from './pages/SupportPage';
 import { VersionControlPage } from './pages/VersionControlPage';
 import { AuthSuccess } from "./pages/AuthSuccess";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PromptHistoryPage } from './pages/PromptHistoryPage';
 
 
 
@@ -114,6 +115,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SupportPage />
+          </ProtectedRoute>
+        }
+      />
+
+       <Route
+        path="/prompt-history"
+        element={
+          <ProtectedRoute>
+            <PromptHistoryPage />
           </ProtectedRoute>
         }
       />

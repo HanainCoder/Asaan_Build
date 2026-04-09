@@ -1059,6 +1059,8 @@ Output:
   }
 });
 //for prompt engineering autu suggestions
+
+// 🔥 Get latest 3 prompts (for main page)
 app.get("/api/prompts/recent", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
@@ -1076,11 +1078,12 @@ app.get("/api/prompts/recent", authenticateToken, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("FETCH RECENT PROMPTS ERROR:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("RECENT PROMPTS ERROR:", err);
+    res.status(500).json({ success: false });
   }
 });
 //all prompts for prompt history page
+// 🔥 Get ALL prompts (for modal)
 app.get("/api/prompts/all", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
@@ -1097,8 +1100,8 @@ app.get("/api/prompts/all", authenticateToken, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("FETCH ALL PROMPTS ERROR:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("ALL PROMPTS ERROR:", err);
+    res.status(500).json({ success: false });
   }
 });
 
