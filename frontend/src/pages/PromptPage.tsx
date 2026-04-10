@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';   //  ADDED
@@ -66,6 +66,15 @@ const handleSubmit = async (e: React.FormEvent) => {
   const useExample = (example: string) => {
     setPrompt(example);
   };
+  //to get the auto fill prompt from history page when user click "Reuse" button
+  useEffect(() => {
+  const reusedPrompt = localStorage.getItem("reusePrompt");
+
+  if (reusedPrompt) {
+    setPrompt(reusedPrompt); // ✅ fills textarea
+    localStorage.removeItem("reusePrompt"); // cleanup
+  }
+}, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-full">

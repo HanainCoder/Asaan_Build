@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { Header } from "../components/Header";
 import { History, Clock, Sparkles, RotateCcw, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 type PromptItem = {
   prompt: string;
@@ -14,6 +15,7 @@ export function PromptHistoryPage() {
   const [allPrompts, setAllPrompts] = useState<PromptItem[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
+  const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
 
@@ -40,9 +42,9 @@ export function PromptHistoryPage() {
   };
 
   const handleReuse = (prompt: string) => {
-    localStorage.setItem("reusePrompt", prompt);
-    alert("Prompt ready to reuse 🚀");
-  };
+  localStorage.setItem("reusePrompt", prompt);
+  navigate("/prompt"); // 🔥 THIS LINE ADDED
+};
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-full">
