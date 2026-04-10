@@ -5,16 +5,15 @@ import {
   History,
   Clock,
   Sparkles,
-  RotateCcw,
-  FileText,
-  TrendingUp,
   Layers,
   Zap
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type PromptItem = {
+  id: number;
   prompt: string;
+  improved_prompt?: string;
   created_at: string;
 };
 
@@ -28,13 +27,15 @@ export function PromptHistoryPage() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  const [improvingKey, setImprovingKey] = useState<string | null>(null);
-  const [improvedPrompts, setImprovedPrompts] = useState<{ [key: string]: string }>({});
+  const [improvingKey, setImprovingKey] = useState<number | null>(null);
+
+  // ✅ STORE IMPROVED PROMPTS LOCALLY
+  const [improvedPrompts, setImprovedPrompts] = useState<{ [key: number]: string }>({});
 
   // ---------------- IMPROVE ----------------
-  const handleImprove = async (prompt: string, key: string) => {
+  const handleImprove = async (prompt: string, id: number) => {
     try {
-      setImprovingKey(key);
+      setImprovingKey(id);
 
       const res = await fetch("http://localhost:5000/api/prompts/improve", {
         method: "POST",
@@ -42,7 +43,7 @@ export function PromptHistoryPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, id }),
       });
 
       const data = await res.json();
@@ -50,8 +51,21 @@ export function PromptHistoryPage() {
       if (data.success) {
         setImprovedPrompts((prev) => ({
           ...prev,
-          [key]: data.improved,
+          [id]: data.improved,
         }));
+
+        // optional UI sync
+        setRecentPrompts((prev) =>
+          prev.map((p) =>
+            p.id === id ? { ...p, improved_prompt: data.improved } : p
+          )
+        );
+
+        setAllPrompts((prev) =>
+          prev.map((p) =>
+            p.id === id ? { ...p, improved_prompt: data.improved } : p
+          )
+        );
       }
     } finally {
       setImprovingKey(null);
@@ -69,6 +83,7 @@ export function PromptHistoryPage() {
     };
     fetchRecent();
   }, []);
+
 
   // ---------------- SEE ALL ----------------
   const handleSeeAll = async () => {
@@ -90,10 +105,31 @@ export function PromptHistoryPage() {
     navigate("/prompt");
   };
 
+  useEffect(() => {
+  const fetchAll = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/prompts/all", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (data.success) setAllPrompts(data.prompts);
+    } catch (err) {
+      console.error("Failed to fetch all prompts");
+    }
+  };
+
+  fetchAll();
+}, []);
+
   // ---------------- STATS ----------------
   const total = allPrompts.length || recentPrompts.length;
+
   const recentCount = recentPrompts.length;
-  const improvedCount = Object.keys(improvedPrompts).length;
+
+  const improvedCount =
+    Object.keys(improvedPrompts).length +
+    recentPrompts.filter(p => p.improved_prompt).length;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-full">
@@ -104,7 +140,7 @@ export function PromptHistoryPage() {
 
         <main className="flex-1 w-full p-6 lg:p-8">
 
-          {/* ================= HEADER ================= */}
+          {/* HEADER */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center size-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
               <History className="size-8 text-white" />
@@ -115,7 +151,7 @@ export function PromptHistoryPage() {
             </p>
           </div>
 
-          {/* ================= TOP CARDS ================= */}
+          {/* TOP CARDS */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
             <div className="bg-white p-5 rounded-2xl border">
@@ -152,7 +188,7 @@ export function PromptHistoryPage() {
 
           </div>
 
-          {/* ================= MAIN + RIGHT SIDEBAR ================= */}
+          {/* MAIN */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* LEFT */}
@@ -178,13 +214,12 @@ export function PromptHistoryPage() {
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {recentPrompts.map((p, i) => {
-                    const key = `recent-${i}`;
-                    const improved = improvedPrompts[key];
+                  {recentPrompts.map((p) => {
+                    const improved = improvedPrompts[p.id] || p.improved_prompt;
 
                     return (
                       <div
-                        key={key}
+                        key={p.id}
                         className="border rounded-xl p-4 flex justify-between"
                       >
                         <div className="flex-1 pr-4">
@@ -200,12 +235,17 @@ export function PromptHistoryPage() {
                         </div>
 
                         <div className="flex gap-3">
-                          <button
-                            onClick={() => handleImprove(p.prompt, key)}
-                            className="text-xs text-blue-600"
-                          >
-                            Improve
-                          </button>
+                         <button
+  onClick={() => handleImprove(p.prompt, p.id)}
+  disabled={improvingKey === p.id || !!improved}
+  className="text-xs text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  {improvingKey === p.id
+    ? "Improving..."
+    : improved
+    ? "Improved"
+    : "Improve"}
+</button>
 
                           <button
                             onClick={() => handleReuse(improved || p.prompt)}
@@ -224,46 +264,11 @@ export function PromptHistoryPage() {
             {/* RIGHT SIDEBAR */}
             <div className="flex flex-col gap-6">
 
-              {/* TIP */}
               <div className="bg-white p-5 rounded-2xl border">
                 <h3 className="font-semibold mb-2">💡 Pro Tip</h3>
                 <p className="text-sm text-gray-500">
                   Improve prompts before reuse for better AI results.
                 </p>
-              </div>
-
-              {/* QUICK ACTIONS */}
-              <div className="bg-white p-5 rounded-2xl border">
-                <h3 className="font-semibold mb-3">⚡ Quick Actions</h3>
-
-                <button
-                  onClick={handleSeeAll}
-                  className="w-full text-left text-sm p-2 rounded hover:bg-gray-50"
-                >
-                  View Full History
-                </button>
-
-                <button
-                  onClick={() => recentPrompts[0] && handleReuse(recentPrompts[0].prompt)}
-                  className="w-full text-left text-sm p-2 rounded hover:bg-gray-50"
-                >
-                  Reuse Latest Prompt
-                </button>
-              </div>
-
-              {/* INSPIRATION */}
-              <div className="bg-gradient-to-br from-blue-600 to-purple-600 text-white p-5 rounded-2xl">
-                <h3 className="font-semibold">🚀 Need Inspiration?</h3>
-                <p className="text-sm mt-2 text-blue-100">
-                  Browse your prompt history to find your best ideas.
-                </p>
-
-                <button
-                  onClick={handleSeeAll}
-                  className="mt-4 w-full bg-white text-blue-600 py-2 rounded-xl text-sm font-semibold"
-                >
-                  Explore Now
-                </button>
               </div>
 
             </div>
@@ -272,7 +277,7 @@ export function PromptHistoryPage() {
         </main>
       </div>
 
-      {/* MODAL (UNCHANGED LOGIC) */}
+      {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
@@ -286,12 +291,12 @@ export function PromptHistoryPage() {
               {loadingAll ? (
                 <p className="text-gray-400 text-center py-8">Loading...</p>
               ) : (
-                allPrompts.map((p, i) => {
-                  const key = `all-${i}`;
-                  const improved = improvedPrompts[key];
+                allPrompts.map((p) => {
+                  const improved = improvedPrompts[p.id] || p.improved_prompt;
 
                   return (
-                    <div key={key} className="border p-3 rounded flex justify-between">
+                    <div key={p.id} className="border p-3 rounded flex justify-between">
+
                       <div className="flex-1 pr-4">
                         <p className="text-sm line-clamp-2">
                           {improved || p.prompt}
@@ -299,12 +304,17 @@ export function PromptHistoryPage() {
                       </div>
 
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => handleImprove(p.prompt, key)}
-                          className="text-xs text-blue-600"
-                        >
-                          Improve
-                        </button>
+                       <button
+  onClick={() => handleImprove(p.prompt, p.id)}
+  disabled={improvingKey === p.id || !!improved}
+  className="text-xs text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  {improvingKey === p.id
+    ? "Improving..."
+    : improved
+    ? "Improved"
+    : "Improve"}
+</button>
 
                         <button
                           onClick={() => handleReuse(improved || p.prompt)}

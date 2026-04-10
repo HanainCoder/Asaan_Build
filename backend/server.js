@@ -1064,12 +1064,12 @@ Output:
 app.get("/api/prompts/recent", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT prompt, created_at
-       FROM generated_projects
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT 3`,
-      [req.user.id]
+      `SELECT id, prompt, improved_prompt, created_at
+   FROM generated_projects
+   WHERE user_id = $1
+   ORDER BY created_at DESC
+   LIMIT 3`,
+  [req.user.id]
     );
 
     res.json({
@@ -1087,11 +1087,11 @@ app.get("/api/prompts/recent", authenticateToken, async (req, res) => {
 app.get("/api/prompts/all", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT prompt, created_at
-       FROM generated_projects
-       WHERE user_id = $1
-       ORDER BY created_at DESC`,
-      [req.user.id]
+       `SELECT id, prompt, improved_prompt, created_at
+   FROM generated_projects
+   WHERE user_id = $1
+   ORDER BY created_at DESC`,
+  [req.user.id]
     );
 
     res.json({
@@ -1109,26 +1109,48 @@ app.get("/api/prompts/all", authenticateToken, async (req, res) => {
 // ============================================
 
 app.post("/api/prompts/improve", authenticateToken, async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, id } = req.body;
 
-  if (!prompt) {
+  if (!prompt || !id) {
     return res.status(400).json({
       success: false,
-      message: "Prompt required"
+      message: "Prompt and ID required"
     });
   }
 
   try {
-    // 🔥 SMALL PROMPT (LOW TOKENS)
+    // ✅ CHECK IF ALREADY IMPROVED (NEW ADDITION)
+    const existing = await pool.query(
+      `SELECT improved_prompt FROM generated_projects WHERE id = $1 AND user_id = $2`,
+      [id, req.user.id]
+    );
+
+    if (existing.rows[0]?.improved_prompt) {
+      return res.json({
+        success: true,
+        improved: existing.rows[0].improved_prompt,
+        message: "Already improved"
+      });
+    }
+
+    // 🔽 YOUR ORIGINAL LOGIC (UNCHANGED)
     const improvePrompt = `Improve this app idea in one clear and slightly more detailed sentence:\n${prompt}`;
 
     const response = await client.responses.create({
-      model: "gpt-4o-mini", //  cheap model
+      model: "gpt-4o-mini",
       input: improvePrompt,
-      max_output_tokens: 60  // 🔥 COST CONTROL
+      max_output_tokens: 60
     });
 
     const improved = response.output_text;
+
+    // 🔥 SAVE INTO SAME ROW
+    await pool.query(
+      `UPDATE generated_projects
+       SET improved_prompt = $1
+       WHERE id = $2 AND user_id = $3`,
+      [improved, id, req.user.id]
+    );
 
     res.json({
       success: true,
