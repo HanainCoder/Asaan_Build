@@ -1166,8 +1166,40 @@ app.post("/api/prompts/improve", authenticateToken, async (req, res) => {
     });
   }
 });
+//api for prompt usage stats (for analytics page)
+app.get("/api/prompts/stats", authenticateToken, async (req, res) => {
+  const { type } = req.query; // daily | weekly | monthly
 
+  try {
+    let groupBy;
 
+    if (type === "weekly") {
+      groupBy = "DATE_TRUNC('week', created_at)";
+    } else if (type === "monthly") {
+      groupBy = "DATE_TRUNC('month', created_at)";
+    } else {
+      groupBy = "DATE(created_at)";
+    }
+
+    const result = await pool.query(
+      `
+      SELECT 
+        ${groupBy} as date,
+        COUNT(*) as count
+      FROM generated_projects
+      WHERE user_id = $1
+      GROUP BY date
+      ORDER BY date ASC
+      `,
+      [req.user.id]
+    );
+
+    res.json({ success: true, stats: result.rows });
+
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
 
 // START SERVER
 app.listen(process.env.PORT, () => {

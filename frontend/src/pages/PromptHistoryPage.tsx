@@ -8,6 +8,16 @@ import {
   Layers,
   Zap
 } from "lucide-react";
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid
+} from "recharts";
 import { useNavigate } from "react-router-dom";
 
 type PromptItem = {
@@ -23,6 +33,9 @@ export function PromptHistoryPage() {
   const [allPrompts, setAllPrompts] = useState<PromptItem[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
+
+  const [statsType, setStatsType] = useState("daily");
+  const [stats, setStats] = useState<any[]>([]);
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -84,6 +97,27 @@ export function PromptHistoryPage() {
     fetchRecent();
   }, []);
 
+  //for insight charts
+  useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/prompts/stats?type=${statsType}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await res.json();
+      if (data.success) setStats(data.stats);
+    } catch (err) {
+      console.error("Stats error");
+    }
+  };
+
+  fetchStats();
+}, [statsType]);
+
 
   // ---------------- SEE ALL ----------------
   const handleSeeAll = async () => {
@@ -130,6 +164,30 @@ export function PromptHistoryPage() {
   const improvedCount =
     Object.keys(improvedPrompts).length +
     recentPrompts.filter(p => p.improved_prompt).length;
+
+  const formattedStats = stats.map((s: any) => ({
+  ...s,
+  date: new Date(s.date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  }),
+}));
+const getInsight = () => {
+  if (stats.length === 0) return "No activity yet";
+
+  const maxDay = stats.reduce((prev: any, curr: any) =>
+    Number(curr.count) > Number(prev.count) ? curr : prev
+  );
+
+  const total = stats.reduce(
+    (sum: number, s: any) => sum + Number(s.count),
+    0
+  );
+
+  return `You created ${total} prompts. Most active on ${new Date(
+    maxDay.date
+  ).toDateString()} with ${maxDay.count} prompts 🚀`;
+};
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-full">
@@ -293,6 +351,80 @@ export function PromptHistoryPage() {
 
             </div>
           </div>
+
+          {/* insight charts */}
+          {/* 🔥 PREMIUM ANALYTICS */}
+<div className="lg:col-span-2 bg-white rounded-2xl p-6 border mt-6 shadow-sm">
+
+  {/* HEADER + TOGGLE */}
+  <div className="flex justify-between items-center mb-4">
+    <h2 className="font-semibold text-gray-700">
+      📊 Prompt Analytics
+    </h2>
+
+    <div className="flex gap-2">
+      {["daily", "weekly", "monthly"].map((type) => (
+        <button
+          key={type}
+          onClick={() => setStatsType(type)}
+          className={`px-3 py-1 rounded-lg text-sm transition ${
+            statsType === type
+              ? "bg-purple-600 text-white shadow"
+              : "bg-gray-100 hover:bg-gray-200"
+          }`}
+        >
+          {type}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  {/* CHART */}
+  {stats.length === 0 ? (
+    <p className="text-gray-400 text-sm text-center py-10">
+      No analytics data yet
+    </p>
+  ) : (
+    <ResponsiveContainer width="100%" height={280}>
+      <ComposedChart data={formattedStats}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+
+        <XAxis dataKey="date" />
+        <YAxis allowDecimals={false} />
+
+        <Tooltip
+          contentStyle={{
+            borderRadius: "10px",
+            border: "none",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          }}
+        />
+
+        {/* 🔥 BAR */}
+        <Bar
+          dataKey="count"
+          barSize={30}
+          radius={[10, 10, 0, 0]}
+        />
+
+        {/* 🔥 LINE */}
+        <Line
+          type="monotone"
+          dataKey="count"
+          strokeWidth={3}
+          dot={{ r: 4 }}
+        />
+      </ComposedChart>
+    </ResponsiveContainer>
+  )}
+
+  {/* 🤖 AI INSIGHT */}
+  <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-4 rounded-xl mt-5 shadow">
+    <h3 className="font-semibold mb-1">🤖 AI Insight</h3>
+    <p className="text-sm">{getInsight()}</p>
+  </div>
+
+</div>
 
         </main>
       </div>
