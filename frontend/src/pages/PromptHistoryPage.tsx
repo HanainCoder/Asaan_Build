@@ -160,10 +160,16 @@ export function PromptHistoryPage() {
   const total = allPrompts.length || recentPrompts.length;
 
   const recentCount = recentPrompts.length;
+//count prompts that have been improved
+  const uniquePrompts = Array.from(
+  new Map(
+    [...recentPrompts, ...allPrompts].map(p => [p.id, p])
+  ).values()
+);
 
-  const improvedCount =
-    Object.keys(improvedPrompts).length +
-    recentPrompts.filter(p => p.improved_prompt).length;
+const improvedCount = uniquePrompts.filter(
+  p => p.improved_prompt || improvedPrompts[p.id]
+).length;
 
   const formattedStats = stats.map((s: any) => ({
   ...s,
