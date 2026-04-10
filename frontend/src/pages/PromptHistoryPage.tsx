@@ -270,6 +270,26 @@ export function PromptHistoryPage() {
                   Improve prompts before reuse for better AI results.
                 </p>
               </div>
+              {/* NEW CARD 1 */}
+  <div className="bg-white p-5 rounded-2xl border">
+    <h3 className="font-semibold mb-2">📊 Your Activity</h3>
+    <p className="text-sm text-gray-500">
+      You have created <span className="font-semibold">{total}</span> prompts.
+    </p>
+    <p className="text-sm text-gray-500 mt-1">
+      {improvedCount} prompts improved using AI.
+    </p>
+  </div>
+  {/* NEW CARD 2 */}
+  <div className="bg-white p-5 rounded-2xl border">
+    <h3 className="font-semibold mb-2">🚀 Quick Action</h3>
+    <button
+      onClick={() => navigate("/prompt")}
+      className="w-full bg-purple-600 text-white py-2 rounded-xl text-sm"
+    >
+      Create New Prompt
+    </button>
+  </div>
 
             </div>
           </div>
