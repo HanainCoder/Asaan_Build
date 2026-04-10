@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { Header } from "../components/Header";
-import { History, Clock, Sparkles, RotateCcw, FileText } from "lucide-react";
+import {
+  History,
+  Clock,
+  Sparkles,
+  RotateCcw,
+  FileText,
+  TrendingUp,
+  Layers,
+  Zap
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type PromptItem = {
@@ -16,44 +25,16 @@ export function PromptHistoryPage() {
   const [showModal, setShowModal] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
 
-  // 🔥 NEW STATES
-  const [improvingIndex, setImprovingIndex] = useState<number | null>(null);
-  const [improvedPrompts, setImprovedPrompts] = useState<{ [key: number]: string }>({});
-
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    const fetchRecent = async () => {
-      const res = await fetch("http://localhost:5000/api/prompts/recent", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success) setRecentPrompts(data.prompts);
-    };
-    fetchRecent();
-  }, []);
+  const [improvingKey, setImprovingKey] = useState<string | null>(null);
+  const [improvedPrompts, setImprovedPrompts] = useState<{ [key: string]: string }>({});
 
-  const handleSeeAll = async () => {
-    setShowModal(true);
-    setLoadingAll(true);
-    const res = await fetch("http://localhost:5000/api/prompts/all", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (data.success) setAllPrompts(data.prompts);
-    setLoadingAll(false);
-  };
-
-  const handleReuse = (prompt: string) => {
-    localStorage.setItem("reusePrompt", prompt);
-    navigate("/prompt");
-  };
-
-  // 🔥 AI IMPROVE FUNCTION
-  const handleImprove = async (prompt: string, index: number) => {
+  // ---------------- IMPROVE ----------------
+  const handleImprove = async (prompt: string, key: string) => {
     try {
-      setImprovingIndex(index);
+      setImprovingKey(key);
 
       const res = await fetch("http://localhost:5000/api/prompts/improve", {
         method: "POST",
@@ -69,15 +50,50 @@ export function PromptHistoryPage() {
       if (data.success) {
         setImprovedPrompts((prev) => ({
           ...prev,
-          [index]: data.improved,
+          [key]: data.improved,
         }));
       }
-    } catch (err) {
-      console.error("Improve error", err);
     } finally {
-      setImprovingIndex(null);
+      setImprovingKey(null);
     }
   };
+
+  // ---------------- FETCH RECENT ----------------
+  useEffect(() => {
+    const fetchRecent = async () => {
+      const res = await fetch("http://localhost:5000/api/prompts/recent", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setRecentPrompts(data.prompts);
+    };
+    fetchRecent();
+  }, []);
+
+  // ---------------- SEE ALL ----------------
+  const handleSeeAll = async () => {
+    setShowModal(true);
+    setLoadingAll(true);
+
+    const res = await fetch("http://localhost:5000/api/prompts/all", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    if (data.success) setAllPrompts(data.prompts);
+
+    setLoadingAll(false);
+  };
+
+  const handleReuse = (prompt: string) => {
+    localStorage.setItem("reusePrompt", prompt);
+    navigate("/prompt");
+  };
+
+  // ---------------- STATS ----------------
+  const total = allPrompts.length || recentPrompts.length;
+  const recentCount = recentPrompts.length;
+  const improvedCount = Object.keys(improvedPrompts).length;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-full">
@@ -88,92 +104,175 @@ export function PromptHistoryPage() {
 
         <main className="flex-1 w-full p-6 lg:p-8">
 
-          {/* HEADER */}
-          <div className="text-center mb-10">
+          {/* ================= HEADER ================= */}
+          <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center size-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
               <History className="size-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold mb-2">Prompt History</h1>
             <p className="text-gray-500">
-              View and reuse your previously generated prompts
+              Track, improve, and reuse your AI prompts
             </p>
           </div>
 
-          {/* RECENT PROMPTS */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 w-full">
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="font-semibold text-lg flex items-center gap-2">
-                <Clock className="size-5 text-gray-400" />
-                Recent Prompts
-              </h2>
-              <button
-                onClick={handleSeeAll}
-                className="text-sm text-blue-600 font-medium hover:underline"
-              >
-                See All
-              </button>
+          {/* ================= TOP CARDS ================= */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+            <div className="bg-white p-5 rounded-2xl border">
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <Layers className="size-4 text-blue-500" />
+                Total Prompts
+              </div>
+              <p className="text-2xl font-bold mt-2">{total}</p>
             </div>
 
-            {recentPrompts.length === 0 ? (
-              <div className="text-center py-16 text-gray-400">
-                <FileText className="size-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">No prompts yet</p>
+            <div className="bg-white p-5 rounded-2xl border">
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <Clock className="size-4 text-green-500" />
+                Recent
               </div>
-            ) : (
-              <div className="space-y-3">
-                {recentPrompts.map((p, i) => (
-                  <div
-                    key={i}
-                    className="border border-gray-100 rounded-xl p-4 flex justify-between items-start hover:bg-gray-50"
-                  >
-                    {/* TEXT */}
-                    <div className="flex-1 pr-4">
-                      <p className="text-sm text-gray-800">
-                        {improvedPrompts[i] || p.prompt}
-                      </p>
+              <p className="text-2xl font-bold mt-2">{recentCount}</p>
+            </div>
 
-                      {improvedPrompts[i] && (
-                        <p className="text-xs text-green-600 mt-1">
-                          ✨ Improved version
-                        </p>
-                      )}
-
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new Date(p.created_at).toLocaleString()}
-                      </p>
-                    </div>
-
-                    {/* BUTTONS */}
-                    <div className="flex gap-3">
-
-                      <button
-                        onClick={() => handleImprove(p.prompt, i)}
-                        disabled={improvingIndex === i}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-                      >
-                        <Sparkles className="size-3" />
-                        {improvingIndex === i ? "Improving..." : "Improve"}
-                      </button>
-
-                      <button
-                        onClick={() => handleReuse(improvedPrompts[i] || p.prompt)}
-                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800"
-                      >
-                        <RotateCcw className="size-3" />
-                        Reuse
-                      </button>
-
-                    </div>
-                  </div>
-                ))}
+            <div className="bg-white p-5 rounded-2xl border">
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <Sparkles className="size-4 text-purple-500" />
+                Improved
               </div>
-            )}
+              <p className="text-2xl font-bold mt-2">{improvedCount}</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border">
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <Zap className="size-4 text-orange-500" />
+                AI Boost
+              </div>
+              <p className="text-2xl font-bold mt-2">100%</p>
+            </div>
+
+          </div>
+
+          {/* ================= MAIN + RIGHT SIDEBAR ================= */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* LEFT */}
+            <div className="lg:col-span-2 bg-white rounded-2xl p-6 border">
+
+              <div className="flex justify-between mb-5">
+                <h2 className="font-semibold flex items-center gap-2">
+                  <Clock className="size-4 text-gray-400" />
+                  Recent Prompts
+                </h2>
+
+                <button
+                  onClick={handleSeeAll}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  See All
+                </button>
+              </div>
+
+              {recentPrompts.length === 0 ? (
+                <p className="text-gray-400 text-center py-10">
+                  No prompts yet
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {recentPrompts.map((p, i) => {
+                    const key = `recent-${i}`;
+                    const improved = improvedPrompts[key];
+
+                    return (
+                      <div
+                        key={key}
+                        className="border rounded-xl p-4 flex justify-between"
+                      >
+                        <div className="flex-1 pr-4">
+                          <p className="text-sm line-clamp-2">
+                            {improved || p.prompt}
+                          </p>
+
+                          {improved && (
+                            <p className="text-xs text-green-600 mt-1">
+                              ✨ Improved
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleImprove(p.prompt, key)}
+                            className="text-xs text-blue-600"
+                          >
+                            Improve
+                          </button>
+
+                          <button
+                            onClick={() => handleReuse(improved || p.prompt)}
+                            className="text-xs text-purple-600"
+                          >
+                            Reuse
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT SIDEBAR */}
+            <div className="flex flex-col gap-6">
+
+              {/* TIP */}
+              <div className="bg-white p-5 rounded-2xl border">
+                <h3 className="font-semibold mb-2">💡 Pro Tip</h3>
+                <p className="text-sm text-gray-500">
+                  Improve prompts before reuse for better AI results.
+                </p>
+              </div>
+
+              {/* QUICK ACTIONS */}
+              <div className="bg-white p-5 rounded-2xl border">
+                <h3 className="font-semibold mb-3">⚡ Quick Actions</h3>
+
+                <button
+                  onClick={handleSeeAll}
+                  className="w-full text-left text-sm p-2 rounded hover:bg-gray-50"
+                >
+                  View Full History
+                </button>
+
+                <button
+                  onClick={() => recentPrompts[0] && handleReuse(recentPrompts[0].prompt)}
+                  className="w-full text-left text-sm p-2 rounded hover:bg-gray-50"
+                >
+                  Reuse Latest Prompt
+                </button>
+              </div>
+
+              {/* INSPIRATION */}
+              <div className="bg-gradient-to-br from-blue-600 to-purple-600 text-white p-5 rounded-2xl">
+                <h3 className="font-semibold">🚀 Need Inspiration?</h3>
+                <p className="text-sm mt-2 text-blue-100">
+                  Browse your prompt history to find your best ideas.
+                </p>
+
+                <button
+                  onClick={handleSeeAll}
+                  className="mt-4 w-full bg-white text-blue-600 py-2 rounded-xl text-sm font-semibold"
+                >
+                  Explore Now
+                </button>
+              </div>
+
+            </div>
           </div>
 
         </main>
       </div>
 
-      {/* MODAL */}
+      {/* MODAL (UNCHANGED LOGIC) */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
@@ -185,32 +284,47 @@ export function PromptHistoryPage() {
 
             <div className="overflow-y-auto space-y-3 flex-1">
               {loadingAll ? (
-                <p>Loading...</p>
+                <p className="text-gray-400 text-center py-8">Loading...</p>
               ) : (
-                allPrompts.map((p, i) => (
-                  <div key={i} className="border p-3 rounded flex justify-between">
+                allPrompts.map((p, i) => {
+                  const key = `all-${i}`;
+                  const improved = improvedPrompts[key];
 
-                    <div>
-                      <p>{improvedPrompts[i] || p.prompt}</p>
-                      {improvedPrompts[i] && (
-                        <p className="text-xs text-green-600">✨ Improved</p>
-                      )}
+                  return (
+                    <div key={key} className="border p-3 rounded flex justify-between">
+                      <div className="flex-1 pr-4">
+                        <p className="text-sm line-clamp-2">
+                          {improved || p.prompt}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleImprove(p.prompt, key)}
+                          className="text-xs text-blue-600"
+                        >
+                          Improve
+                        </button>
+
+                        <button
+                          onClick={() => handleReuse(improved || p.prompt)}
+                          className="text-xs text-purple-600"
+                        >
+                          Reuse
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="flex gap-2">
-                      <button onClick={() => handleImprove(p.prompt, i)}>
-                        Improve
-                      </button>
-                      <button onClick={() => handleReuse(improvedPrompts[i] || p.prompt)}>
-                        Reuse
-                      </button>
-                    </div>
-
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
+            <button
+              onClick={() => setShowModal(false)}
+              className="mt-4 w-full bg-blue-600 text-white py-2 rounded-xl"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
