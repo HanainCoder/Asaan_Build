@@ -405,6 +405,7 @@ const getInsight = () => {
           dataKey="count"
           barSize={30}
           radius={[10, 10, 0, 0]}
+          fill="#8B5CF6"
         />
 
         {/* 🔥 LINE */}
