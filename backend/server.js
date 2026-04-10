@@ -1104,6 +1104,46 @@ app.get("/api/prompts/all", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+//// ============================================
+// PROMPT IMPROVER (ULTRA LIGHT, NO STREAM)
+// ============================================
+
+app.post("/api/prompts/improve", authenticateToken, async (req, res) => {
+  const { prompt } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({
+      success: false,
+      message: "Prompt required"
+    });
+  }
+
+  try {
+    // 🔥 SMALL PROMPT (LOW TOKENS)
+    const improvePrompt = `Improve this app idea in one clear and slightly more detailed sentence:\n${prompt}`;
+
+    const response = await client.responses.create({
+      model: "gpt-4o-mini", //  cheap model
+      input: improvePrompt,
+      max_output_tokens: 60  // 🔥 COST CONTROL
+    });
+
+    const improved = response.output_text;
+
+    res.json({
+      success: true,
+      improved
+    });
+
+  } catch (err) {
+    console.error("IMPROVE ERROR:", err.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to improve prompt"
+    });
+  }
+});
 
 
 
