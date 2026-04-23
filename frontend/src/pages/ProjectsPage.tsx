@@ -182,14 +182,15 @@ export function ProjectsPage() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                <table className="w-full">
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden w-full">
+                 <div className="w-full overflow-x-auto">
+                <table className="w-full min-w-[600px]">
                   <thead className="bg-gray-50 border-b">
                     <tr>
-                      <th className="px-6 py-4 text-left">Project</th>
-                      <th className="px-6 py-4 text-left">Date Created</th>
-                      <th className="px-6 py-4 text-left">Status</th>
-                      <th className="px-6 py-4 text-left">Actions</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left">Project</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4  text-left">Date Created</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left">Status</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -198,7 +199,7 @@ export function ProjectsPage() {
                         key={project.id}
                         className="transition-all duration-300 cursor-pointer hover:bg-gray-50 hover:shadow-sm hover:-translate-y-[2px] hover:border-l-4 hover:border-blue-500"
                       >
-                        <td className="px-6 py-4 flex items-center gap-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-2">
                           {project.thumbnail && (
                             <img
                               src={project.thumbnail}
@@ -208,8 +209,8 @@ export function ProjectsPage() {
                           )}
                           <span>{project.name}</span>
                         </td>
-                        <td className="px-6 py-4 text-gray-600">{project.date}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600">{project.date}</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <span
                             className={`inline-flex px-3 py-1 rounded-full text-xs ${
                               project.status === 'Active'
@@ -220,7 +221,7 @@ export function ProjectsPage() {
                             {project.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <button
                             onClick={() =>
   navigate(`/code/${project.id}`, {
@@ -236,6 +237,7 @@ export function ProjectsPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
 

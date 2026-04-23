@@ -29,10 +29,11 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { icon: PlusCircle, label: t('createNewApp'), path: '/prompt' },
     { icon: FolderKanban, label: t('myProjects'), path: '/projects' },
     { icon: HelpCircle, label: t(' Version Control '), path: '/version' },
+    { icon: HelpCircle, label: t('Templates Hub'), path: '/templates' },
+    { icon: HelpCircle, label: t('Prompt History Page'), path: '/prompt-history' },
     { icon: Settings, label: t('settings'), path: '/settings' },
     { icon: HelpCircle, label: t('support'), path: '/support' },
-    { icon: HelpCircle, label: t('Templates Hub'), path: '/templates' },
-     { icon: HelpCircle, label: t('Prompt History Page'), path: '/prompt-history' },
+    
 
 
   ];
