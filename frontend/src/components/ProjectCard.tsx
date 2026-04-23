@@ -30,6 +30,8 @@ export function ProjectCard({
   const [isRenaming, setIsRenaming] = useState(false);
   const [tempName, setTempName] = useState(name || '');
   const inputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (isRenaming && inputRef.current) inputRef.current.focus();
@@ -39,6 +41,15 @@ export function ProjectCard({
     if (tempName.trim() !== '' && onRename) onRename(tempName.trim());
     setIsRenaming(false);
   };
+   useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+    if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      setShowMenu(false);
+     }
+     };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 relative
@@ -60,7 +71,7 @@ export function ProjectCard({
         )}
 
         {/* Menu Button */}
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3" ref={menuRef}>
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="p-2 rounded-lg bg-white/80 backdrop-blur hover:bg-white transition opacity-0 group-hover:opacity-100"
