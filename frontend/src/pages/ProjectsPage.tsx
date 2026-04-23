@@ -222,7 +222,11 @@ export function ProjectsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <button
-                            onClick={() => navigate(`/dashboard/${project.id}`)}
+                            onClick={() =>
+  navigate(`/code/${project.id}`, {
+    state: { projectId: project.id }
+  })
+}
                             className="text-blue-600 hover:underline text-sm"
                           >
                             {t('open')}
