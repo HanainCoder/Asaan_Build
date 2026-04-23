@@ -186,19 +186,19 @@ export function VersionControlPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 w-317">
+    <div className="min-h-screen flex flex-col bg-gray-50 w-full overflow-x-hidden">
       <Header onMenuClick={() => setSidebarOpen(true)} showMenu />
 
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <main className="flex-1 p-6">
-          <div className="max-w-5xl mx-auto">
+        <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">
+          <div className="max-w-5xl w-full mx-auto px-2 sm:px-0">
 
             {/* Header */}
             <div className="text-center mb-10">
               <div className="inline-flex items-center justify-center size-16
-                bg-gradient-to-br from-blue-600 to-purple-600
+                bg-linear-to-br from-blue-600 to-purple-600
                 shadow-lg rounded-2xl mb-4">
                 <GitBranch className="size-8 text-white" />
               </div>
@@ -214,7 +214,7 @@ export function VersionControlPage() {
                   {/* Project Header */}
                   <div
                     onClick={() => handleProjectClick(project.id)}
-                    className="p-5 cursor-pointer flex justify-between items-center"
+                    className="p-4 sm:p-5 cursor-pointer flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
                   >
                     <div>
                       <h3 className="font-semibold text-lg">{project.name}</h3>
@@ -268,7 +268,7 @@ export function VersionControlPage() {
                           }
                           className="bg-gray-50 border rounded-lg p-4 mt-3 cursor-pointer hover:bg-gray-100 transition"
                         >
-                          <div className="flex justify-between items-center">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                             <div>
                               <h4 className="font-medium">Version {v.version_number}</h4>
                               <p className="text-xs text-gray-500">{v.edit_type}</p>
@@ -276,7 +276,7 @@ export function VersionControlPage() {
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
 
                               {/* Compare Checkbox */}
                               <input
@@ -407,7 +407,7 @@ export function VersionControlPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 flex-1 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 flex-1 overflow-hidden">
               <div className="overflow-auto border-r font-mono text-xs p-3 bg-gray-50">
                 {getDiffLines(compareModal.v1.code, compareModal.v2.code).map((part, i) => (
                   !part.added && (
