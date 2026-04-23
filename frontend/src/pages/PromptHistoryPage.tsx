@@ -349,7 +349,7 @@ const getInsight = () => {
     <h3 className="font-semibold mb-2">🚀 Quick Action</h3>
     <button
       onClick={() => navigate("/prompt")}
-      className="w-full bg-purple-600 text-white py-2 rounded-xl text-sm"
+      className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white py-2.5 rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200"
     >
       Create New Prompt
     </button>
@@ -368,21 +368,22 @@ const getInsight = () => {
       📊 Prompt Analytics
     </h2>
 
-    <div className="flex gap-2">
-      {["daily", "weekly", "monthly"].map((type) => (
-        <button
-          key={type}
-          onClick={() => setStatsType(type)}
-          className={`px-3 py-1 rounded-lg text-sm transition ${
-            statsType === type
-              ? "bg-purple-600 text-white shadow"
-              : "bg-gray-100 hover:bg-gray-200"
-          }`}
-        >
-          {type}
-        </button>
-      ))}
-    </div>
+   <div className="flex gap-2 p-1 bg-gray-100 rounded-xl w-fit">
+  {["daily", "weekly", "monthly"].map((type) => (
+    <button
+      key={type}
+      onClick={() => setStatsType(type)}
+      className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 capitalize
+        ${
+          statsType === type
+            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md scale-105"
+            : "text-gray-600 hover:bg-white hover:shadow-sm"
+        }`}
+    >
+      {type}
+    </button>
+  ))}
+</div>
   </div>
 
   {/* CHART */}

@@ -144,20 +144,29 @@ export function ProjectsPage() {
                   className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                 />
               </div>
-              <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                >
-                  <Grid className="size-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                >
-                  <List className="size-5" />
-                </button>
-              </div>
+              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+  <button
+    onClick={() => setViewMode('grid')}
+    className={`p-2 rounded-lg transition-all duration-200 ${
+      viewMode === 'grid'
+        ? 'bg-white dark:bg-gray-700 shadow text-indigo-600'
+        : 'text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+    }`}
+  >
+    <Grid className="size-5" />
+  </button>
+
+  <button
+    onClick={() => setViewMode('list')}
+    className={`p-2 rounded-lg transition-all duration-200 ${
+      viewMode === 'list'
+        ? 'bg-white dark:bg-gray-700 shadow text-indigo-600'
+        : 'text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+    }`}
+  >
+    <List className="size-5" />
+  </button>
+</div>
             </div>
 
             {/* Projects */}

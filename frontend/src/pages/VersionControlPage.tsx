@@ -243,7 +243,7 @@ export function VersionControlPage() {
                           </span>
                           <button
                             onClick={handleCompare}
-                            className="flex items-center gap-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg transition"
+                            className="flex items-center gap-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-black px-4 py-1.5 rounded-lg transition"
                           >
                             <GitCompare className="size-4" />
                             Compare
@@ -266,7 +266,7 @@ export function VersionControlPage() {
                               state: { projectId: project.id, versionId: v.id }
                             })
                           }
-                          className="bg-gray-50 border rounded-lg p-4 mt-3 cursor-pointer hover:bg-gray-100 transition"
+                          className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-4 mt-3 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all duration-200"
                         >
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                             <div>
@@ -298,7 +298,7 @@ export function VersionControlPage() {
                                   if (!v.code) return alert("No code available.");
                                   setPreviewVersion({ code: v.code, version: v.version_number });
                                 }}
-                                className="text-xs bg-purple-600 hover:bg-purple-700 text-black px-3 py-1.5 rounded-lg transition"
+                                className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1"
                                 title="Preview"
                               >
                                 <Eye className="size-3.5" />
@@ -307,7 +307,7 @@ export function VersionControlPage() {
                               {/* Restore */}
                               <button
                                 onClick={(e) => handleRestore(project.id, v.id, e)}
-                                className="text-xs bg-blue-600 hover:bg-blue-700 text-black px-3 py-1.5 rounded-lg transition"
+                                className="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 px-3 py-1.5 rounded-lg transition"
                               >
                                 Restore
                               </button>
@@ -315,7 +315,7 @@ export function VersionControlPage() {
                               {/* Download */}
                               <button
                                 onClick={(e) => handleDownload(v.code, v.version_number, e)}
-                                className="text-xs bg-green-600 hover:bg-green-700 text-black px-3 py-1.5 rounded-lg transition"
+                                className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1"
                                 title="Download this version"
                               >
                                 <Download className="size-3.5" />
