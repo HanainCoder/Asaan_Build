@@ -186,7 +186,7 @@ export function VersionControlPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 w-full overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50">
       <Header onMenuClick={() => setSidebarOpen(true)} showMenu />
 
       <div className="flex">
