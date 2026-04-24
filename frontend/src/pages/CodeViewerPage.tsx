@@ -27,6 +27,7 @@ const prompt = state?.prompt || "Generate a basic landing page";
 const userId = state?.userId;
 const projectId = state?.projectId; // NEW
 const [editPrompt, setEditPrompt] = useState("");
+const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { t } = useLanguage();
 
@@ -420,11 +421,12 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-full">
-      <Header showMenu={false} />
+      <Header showMenu={true} onMenuClick={() => setSidebarOpen(true)} />
       <div className="flex flex-1">
-       <div className="hidden md:block">
-  <Sidebar isOpen={false} onClose={() => {}} />
-</div>
+       <Sidebar
+  isOpen={sidebarOpen}
+  onClose={() => setSidebarOpen(false)}
+/>
         <main className="flex-1 flex flex-col p-6 lg:p-8 overflow-visible">
           {/* Page Header + Buttons */}
           <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-6 w-full max-w-5xl mx-auto gap-4 relative z-10">
