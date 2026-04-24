@@ -419,16 +419,18 @@ useEffect(() => {
   
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 w-317">
+    <div className="min-h-screen flex flex-col bg-gray-50 w-full">
       <Header showMenu={false} />
       <div className="flex flex-1">
-        <Sidebar isOpen={false} onClose={() => {}} />
+       <div className="hidden md:block">
+  <Sidebar isOpen={false} onClose={() => {}} />
+</div>
         <main className="flex-1 flex flex-col p-6 lg:p-8 overflow-visible">
           {/* Page Header + Buttons */}
           <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-6 w-full max-w-5xl mx-auto gap-4 relative z-10">
             <div className="text-center sm:text-left flex-1">
               <h1 className="text-2xl font-bold mb-2">
-                {t("generatedLandingPage") || "Generated Landing Page"}
+                {t("Code Viewer") || "Generated Landing Page"}
               </h1>
               <p className="text-gray-600">
                 Preview the code and live website generated from your prompt.
@@ -456,26 +458,9 @@ useEffect(() => {
 </div>
 
 */}
-<div className="flex gap-2 w-full mb-3">
 
-  <input
-    value={editPrompt}
-    onChange={(e) => setEditPrompt(e.target.value)}
-    placeholder="e.g. change button color to red"
-    className="flex-1 px-3 py-2 border rounded-md"
-  />
-
-  <button
-    onClick={handleEdit}
-    disabled={!currentProjectId || loading}
-    className="px-4 py-2 bg-purple-600 text-black rounded-md"
-  >
-    Apply
-  </button>
-
-</div>
             {/* Buttons */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
               <select
                 value={format}
                 onChange={(e) => setFormat(e.target.value as "html" | "txt")}
@@ -498,11 +483,11 @@ useEffect(() => {
               </button>
               {/* gor githb */}
               {/* GitHub Button */}
-              {!githubConnected && (
+              {/* {!githubConnected && (
   <p className="text-sm text-gray-500 mb-2">
     Connect GitHub from Dashboard to enable uploads
   </p>
-)}
+)} */}
 <button
   onClick={handleUploadGithub}
   disabled={!githubConnected || uploading || !currentProjectId}
@@ -534,9 +519,9 @@ useEffect(() => {
           </div>
 
           {/* Code + Preview */}
-          <div className="flex flex-1 border rounded-2xl overflow-hidden shadow-lg min-h-[500px]">
+          <div className="flex flex-col md:flex-row border rounded-2xl overflow-hidden shadow-lg min-h-[500px]">
             {/* Code Viewer */}
-            <div className="w-1/2 h-full overflow-auto bg-gray-900 rounded-l-2xl">
+            <div className="w-full md:w-1/2 h-[300px] md:h-full overflow-auto bg-gray-900 rounded-l-2xl">
   <Editor
     height="100%"
     defaultLanguage="html"
@@ -555,7 +540,7 @@ useEffect(() => {
 </div>
 
             {/* Live Preview */}
-            <div className="w-1/2 h-full border-l rounded-r-2xl relative">
+            <div className="w-full md:w-1/2 h-[300px] md:h-full border-t md:border-t-0 md:border-l rounded-b-2xl md:rounded-r-2xl relative">
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10 rounded-r-2xl">
                   <p className="text-gray-600 text-lg animate-pulse">
@@ -570,6 +555,25 @@ useEffect(() => {
               />
             </div>
           </div>
+          {/* Prompt Edit (Moved Below) */}
+<div className="mt-6 w-full max-w-5xl mx-auto">
+  <div className="flex flex-col sm:flex-row gap-2">
+    <input
+      value={editPrompt}
+      onChange={(e) => setEditPrompt(e.target.value)}
+      placeholder="e.g. change button color to red"
+      className="flex-1 px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+    />
+
+    <button
+      onClick={handleEdit}
+      disabled={!currentProjectId || loading}
+      className="px-6 py-3 bg-purple-600 text-black rounded-lg hover:bg-purple-700 transition disabled:bg-gray-400"
+    >
+      Apply Changes
+    </button>
+  </div>
+</div>
         </main>
       </div>
     </div>
