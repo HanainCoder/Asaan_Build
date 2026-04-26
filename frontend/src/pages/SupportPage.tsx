@@ -11,6 +11,9 @@ import {
   Sparkles,
   Code,
   Zap,
+  Mic,       
+  Lightbulb, 
+  Download, 
 } from 'lucide-react';
 
 export function SupportPage() {
@@ -215,20 +218,40 @@ const DEFAULT_STEPS = [
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 mb-8">
-  <h2 className="mb-4 font-semibold">Video Tutorials</h2>
+            {/* Section */}
+            
+<div className="mb-8">
+  <h2 className="font-semibold mb-4">Quick Tips</h2>
+  <div className="grid md:grid-cols-3 gap-4">
+    <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="inline-flex items-center justify-center size-12 bg-blue-50 rounded-xl mb-4">
+        <Mic className="size-6 text-blue-600" />
+      </div>
+      <h3 className="font-semibold text-gray-800 mb-2 text-base">Use Voice Input</h3>
+      <p className="text-sm text-gray-600 leading-relaxed">
+        Click the mic button on the prompt page and speak your idea in English or Roman Urdu — no typing needed.
+      </p>
+    </div>
 
-  <div className="grid md:grid-cols-2 gap-4">
-    <iframe
-      className="w-full h-48 rounded-lg"
-      src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-      allowFullScreen
-    />
-    <iframe
-      className="w-full h-48 rounded-lg"
-      src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-      allowFullScreen
-    />
+    <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="inline-flex items-center justify-center size-12 bg-yellow-50 rounded-xl mb-4">
+        <Lightbulb className="size-6 text-yellow-600" />
+      </div>
+      <h3 className="font-semibold text-gray-800 mb-2 text-base">Be Specific in Prompts</h3>
+      <p className="text-sm text-gray-600 leading-relaxed">
+        The more detail you give — features, colors, target audience — the better your generated app will be.
+      </p>
+    </div>
+
+    <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="inline-flex items-center justify-center size-12 bg-green-50 rounded-xl mb-4">
+        <Download className="size-6 text-green-600" />
+      </div>
+      <h3 className="font-semibold text-gray-800 mb-2 text-base">Export Anytime</h3>
+      <p className="text-sm text-gray-600 leading-relaxed">
+        Download your full source code as a ZIP at any time and deploy it anywhere you like.
+      </p>
+    </div>
   </div>
 </div>
 

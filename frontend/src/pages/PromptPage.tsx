@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';   //  ADDED
+import { useAuth } from '@/contexts/AuthContext';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
-import { Mic, Send, Sparkles, Lightbulb } from 'lucide-react';
+import { Mic, MicOff, Send, Sparkles, Lightbulb } from 'lucide-react';
 
 export function PromptPage() {
   const { t, language } = useLanguage();
-  const { user } = useAuth();       // ✅ GET LOGGED-IN USER
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [voiceLang, setVoiceLang] = useState('en-US');
+  const [voiceError, setVoiceError] = useState('');
+  const recognitionRef = useRef<any>(null);
 
   const examplePrompts = [
     {
@@ -34,47 +38,90 @@ export function PromptPage() {
     },
   ];
 
-  const handleMicClick = () => {
-    setIsListening(!isListening);
+  // cleanup on unmount
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+    };
+  }, []);
 
-    if (!isListening) {
-      setTimeout(() => {
-        setPrompt('Create an e-commerce website for selling books');
-        setIsListening(false);
-      }, 2000);
+  // reuse prompt from history page
+  useEffect(() => {
+    const reusedPrompt = localStorage.getItem('reusePrompt');
+    if (reusedPrompt) {
+      setPrompt(reusedPrompt);
+      localStorage.removeItem('reusePrompt');
     }
+  }, []);
+
+  const handleMicClick = () => {
+    setVoiceError('');
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    // @ts-ignore
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SR) {
+      setVoiceError('Voice input not supported. Please use Chrome or Edge.');
+      return;
+    }
+
+    // @ts-ignore
+    const recognition = new SR();
+    recognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = voiceLang;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceError('');
+    };
+
+    recognition.onresult = (event: any) => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setPrompt(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      setIsListening(false);
+      if (event.error === 'not-allowed') {
+        setVoiceError('Microphone access denied. Allow microphone in browser settings.');
+      } else if (event.error === 'no-speech') {
+        setVoiceError('No speech detected. Please try again.');
+      } else {
+        setVoiceError(`Voice error: ${event.error}`);
+      }
+    };
+
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
   };
 
-  
-  //   SAVE PROMPT FUNCTION
- 
-const [isGenerating, setIsGenerating] = useState(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim() || isGenerating) return;
+    if (!user) return alert('You must be logged in!');
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!prompt.trim() || isGenerating) return;
-  if (!user) return alert("You must be logged in!");
-
-  setIsGenerating(true); //  block further submissions
-
-  navigate(`/code/${Date.now()}`, { 
-    state: { prompt, userId: user.id } 
-  });
-};
-
+    setIsGenerating(true);
+    navigate(`/code/${Date.now()}`, {
+      state: { prompt, userId: user.id },
+    });
+  };
 
   const useExample = (example: string) => {
     setPrompt(example);
   };
-  //to get the auto fill prompt from history page when user click "Reuse" button
-  useEffect(() => {
-  const reusedPrompt = localStorage.getItem("reusePrompt");
-
-  if (reusedPrompt) {
-    setPrompt(reusedPrompt); // ✅ fills textarea
-    localStorage.removeItem("reusePrompt"); // cleanup
-  }
-}, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 w-full">
@@ -106,25 +153,59 @@ const handleSubmit = async (e: React.FormEvent) => {
                   className="w-full p-6 resize-none focus:outline-none min-h-[200px]"
                   dir="auto"
                 />
-                <div className="p-4 bg-gray-50 flex items-center justify-between gap-4 border-t">
-                  <button
-                    type="button"
-                    onClick={handleMicClick}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                      isListening
-                        ? 'bg-red-100 text-red-600'
-                        : 'hover:bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    <Mic className={`size-5 ${isListening ? 'animate-pulse' : ''}`} />
-                    <span className="hidden sm:inline">
-                      {isListening ? 'Listening...' : t('voicePrompt')}
-                    </span>
-                  </button>
 
+                {/* voice error */}
+                {voiceError && (
+                  <div className="px-6 py-2 bg-red-50 text-red-600 text-sm border-t border-red-100">
+                    {voiceError}
+                  </div>
+                )}
+
+                <div className="p-4 bg-gray-50 flex items-center justify-between gap-4 border-t">
+
+                  {/* left: language picker + mic */}
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={voiceLang}
+                      onChange={(e) => setVoiceLang(e.target.value)}
+                      disabled={isListening}
+                      className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none disabled:opacity-50"
+                    >
+                      <option value="en-US">English / Roman Urdu</option>
+                      <option value="ur-PK">اردو (Urdu)</option>
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={handleMicClick}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                        isListening
+                          ? 'bg-red-100 text-red-600'
+                          : 'hover:bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {isListening ? (
+                        <>
+                          <MicOff className={`size-5 animate-pulse`} />
+                          <span className="hidden sm:inline text-sm font-medium">
+                            Listening... (tap to stop)
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="size-5" />
+                          <span className="hidden sm:inline text-sm">
+                            {t('voicePrompt')}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* right: submit */}
                   <button
                     type="submit"
-                    disabled={!prompt.trim()}
+                    disabled={!prompt.trim() || isGenerating}
                     className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span>{t('submitPrompt')}</span>
@@ -159,10 +240,11 @@ const handleSubmit = async (e: React.FormEvent) => {
             <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
               <h3 className="mb-3">💡 Tips for better results</h3>
               <ul className="space-y-2 text-sm text-gray-700">
-                <li className="flex items-start gap-2"><span className="text-blue-600 mt-1">•</span>Be specific about the features</li>
+                <li className="flex items-start gap-2"><span className="text-blue-600 mt-1">•</span>Be specific about the features you want</li>
                 <li className="flex items-start gap-2"><span className="text-blue-600 mt-1">•</span>Mention your target audience</li>
-                <li className="flex items-start gap-2"><span className="text-blue-600 mt-1">•</span>Include design preferences</li>
-                <li className="flex items-start gap-2"><span className="text-blue-600 mt-1">•</span>Use English, Urdu, or Roman Urdu</li>
+                <li className="flex items-start gap-2"><span className="text-blue-600 mt-1">•</span>Include design preferences (colors, style)</li>
+                <li className="flex items-start gap-2"><span className="text-blue-600 mt-1">•</span>Use English, Urdu, or Roman Urdu — voice works in all three</li>
+                <li className="flex items-start gap-2"><span className="text-blue-600 mt-1">•</span>For voice input, use Chrome or Edge browser</li>
               </ul>
             </div>
 

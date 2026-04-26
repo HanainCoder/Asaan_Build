@@ -6,7 +6,7 @@ import { Header } from '../components/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { Search, Wand2, Eye, X, Loader2 } from 'lucide-react';
 
-// ── Types ──────────────────────────────────────────────────────────
+// ── Types 
 interface Template {
   id: string;
   title: string;
