@@ -1058,20 +1058,37 @@ app.post("/api/generateFromTemplate", async (req, res) => {
     // Combine template prompt with any extra user instructions
     // NAYA
     const finalPrompt = `
-You are an AI web developer.
-User request: "${templatePrompt}${extraInstructions ? `. ${extraInstructions}` : ''}"
+You are an expert web developer. Generate a complete, beautiful landing page for: "${templatePrompt}${extraInstructions ? `. ${extraInstructions}` : ''}"
 
-Requirements:
-- Generate ONLY ONE landing page preview section.
-- The section must look complete and professional.
-- Keep the section medium sized (not a full page).
-- Do NOT generate multiple sections.
-Output:
-- Return a complete HTML file.
-- Load Tailwind via CDN.
-- Respond line-by-line as if streaming.
-- Output ONLY raw HTML code. No explanations, no markdown, no backticks, no notes.
-- Do NOT write anything before <!DOCTYPE html> or after </html>.
+STRICT RULES:
+- Output ONLY raw HTML. No explanations, no markdown, no backticks, no comments before <!DOCTYPE html> or after </html>.
+- Use Tailwind CSS via CDN: <script src="https://cdn.tailwindcss.com"></script>
+- Use Google Fonts via a <link> tag for a distinctive font pairing (e.g. Playfair Display + Inter, or Sora + DM Sans — pick what fits the brand).
+- NO <img> tags. NO background-image with URLs. Use ONLY:
+    • CSS gradient backgrounds (e.g. bg-gradient-to-br)
+    • Tailwind background color classes
+    • SVG icons inline (heroicons style, simple paths)
+    • Emoji sparingly as decorative elements
+    • CSS shapes / geometric dividers using pure Tailwind
+
+SECTIONS TO INCLUDE (all in one page, no JS routing):
+1. Navbar — logo text + nav links + CTA button
+2. Hero — bold headline, subtext, 2 CTA buttons, a decorative CSS/SVG visual (NO img)
+3. Features/Benefits — 3–4 cards with icons (inline SVG) + short descriptions
+4. How It Works — 3 numbered steps, horizontal or vertical layout
+5. Testimonials — 2–3 quote cards with fake names and avatar initials (CSS circle, no photo)
+6. Pricing — 2–3 tiers, highlight the middle/recommended tier
+7. FAQ — 3–4 accordion items (CSS-only using <details><summary>)
+8. Footer — links, copyright, social icons (inline SVG)
+
+DESIGN RULES:
+- Pick ONE strong color theme (e.g. deep navy + lime, slate + violet, dark charcoal + amber) — not generic purple-on-white
+- Use large bold typography for headings (text-5xl or bigger for hero)
+- Add subtle gradients, rounded corners, shadows for depth
+- Make it look like a real $5000 SaaS landing page
+- Responsive: works on mobile (use Tailwind responsive prefixes)
+- Smooth scroll: <html style="scroll-behavior: smooth">
+- All sections have generous padding (py-20 or more)
 `
 ;
 
