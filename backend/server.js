@@ -463,8 +463,13 @@ app.post("/api/project/:id/duplicate", async (req, res) => {
 //  register user
 
 app.post("/api/register", async (req, res) => {
-  const { email, password } = req.body;
-
+  const {name, email, password } = req.body;
+if (!name || !name.trim()) {
+  return res.json({
+    success: false,
+    message: "Name is required",
+  });
+}
   try {
     const check = await pool.query("SELECT id FROM users WHERE email = $1", [
       email,
@@ -477,8 +482,8 @@ app.post("/api/register", async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id, email",
-      [email, hashed]
+      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id,name,email",
+      [name.trim(), email, hashed]
     );
 
     res.json({ success: true, user: result.rows[0] });

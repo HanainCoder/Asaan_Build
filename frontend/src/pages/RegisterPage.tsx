@@ -10,6 +10,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [name, setName] = useState('');
 
   const [showPassword, setShowPassword] = useState(false); //new
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); //  NEW
@@ -24,6 +25,9 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!name.trim()) {
+  return setError("Name is required");
+}
 
     if (!emailRegex.test(email)) {
       return setError("Invalid email format. Example: user@example.com");
@@ -40,7 +44,7 @@ export function RegisterPage() {
     }
 
     try {
-      await register(email, password);
+      await register(name, email, password);
       navigate('/login');
     } catch (err: any) {
       setError(err.message || "Registration failed. Try again.");
@@ -114,6 +118,20 @@ const handleGithubSignup = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Name */}
+<div>
+  <label className="block mb-2 text-gray-700">Name</label>
+  <input
+    type="text"
+    value={name}
+    onChange={(e) => setName(e.target.value)}
+    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+               focus:outline-none focus:ring-2 focus:ring-blue-600"
+    placeholder="Your Name"
+    required
+  />
+</div>
 
             {/* Email */}
             <div>
