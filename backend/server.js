@@ -64,7 +64,7 @@ app.get(
   (req, res) => {
 
     const token = jwt.sign(
-      { id: req.user.id, email: req.user.email },
+      { id: req.user.id, email: req.user.email,  name: req.user.name },
       JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -463,17 +463,30 @@ app.post("/api/project/:id/duplicate", async (req, res) => {
 //  register user
 
 app.post("/api/register", async (req, res) => {
-  const {name, email, password } = req.body;
-if (!name || !name.trim()) {
-  return res.json({
-    success: false,
-    message: "Name is required",
-  });
-}
+  let { name, email, password } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.json({
+      success: false,
+      message: "Name is required",
+    });
+  }
+
+  if (!email || !email.trim()) {
+    return res.json({
+      success: false,
+      message: "Email is required",
+    });
+  }
+
   try {
-    const check = await pool.query("SELECT id FROM users WHERE email = $1", [
-      email,
-    ]);
+    // ✅ normalize email
+    email = email.trim().toLowerCase();
+
+    const check = await pool.query(
+      "SELECT id FROM users WHERE LOWER(email) = LOWER($1)",
+      [email]
+    );
 
     if (check.rows.length > 0) {
       return res.json({ success: false, message: "Email already registered" });
@@ -482,11 +495,12 @@ if (!name || !name.trim()) {
     const hashed = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id,name,email",
+      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email",
       [name.trim(), email, hashed]
     );
 
     res.json({ success: true, user: result.rows[0] });
+
   } catch (err) {
     console.error("REGISTER ERROR:", err);
     res.json({ success: false, message: "Server error" });
@@ -498,12 +512,16 @@ if (!name || !name.trim()) {
 //  login user
 
 app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
 
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    // ✅ normalize email
+    email = email.trim().toLowerCase();
+
+    const result = await pool.query(
+      "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",
+      [email]
+    );
 
     if (result.rows.length === 0) {
       return res.json({ success: false, message: "User not found" });
@@ -518,16 +536,17 @@ app.post("/api/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-    { id: user.id, email: user.email },
-    JWT_SECRET,
-    { expiresIn: "1d" }
+      { id: user.id, email: user.email, name: user.name },
+      JWT_SECRET,
+      { expiresIn: "1d" }
     );
 
     res.json({
-    success: true,
-    token,
-    user: { id: user.id, email: user.email },
-   });
+      success: true,
+      token,
+      user: { id: user.id, email: user.email, name: user.name },
+    });
+
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     res.json({ success: false, message: "Server error" });
