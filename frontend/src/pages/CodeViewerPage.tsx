@@ -28,6 +28,7 @@ const userId = state?.userId;
 const projectId = state?.projectId; // NEW
 const [editPrompt, setEditPrompt] = useState("");
 const [sidebarOpen, setSidebarOpen] = useState(false);
+const [githubModal, setGithubModal] = useState<{ open: boolean; repoUrl?: string; error?: string }>({ open: false });
 
   const { t } = useLanguage();
 
@@ -403,12 +404,12 @@ useEffect(() => {
 
     const data = await res.json();
 
-    if (data.success) {
-      alert("Uploaded to GitHub 🚀");
-      window.open(data.repoUrl, "_blank");
-    } else {
-      alert(data.message);
-    }
+   // REPLACE with:
+if (data.success) {
+  setGithubModal({ open: true, repoUrl: data.repoUrl });
+} else {
+  setGithubModal({ open: true, error: data.message });
+}
 
   } catch (err) {
     console.error(err);
@@ -578,6 +579,50 @@ useEffect(() => {
 </div>
         </main>
       </div>
+      {/* GitHub Upload Modal */}
+{/* GitHub Upload Modal */}
+{githubModal.open && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 flex flex-col items-center gap-4 border border-indigo-100">
+      {githubModal.error ? (
+        <>
+          <div className="text-4xl">❌</div>
+          <h2 className="text-xl font-bold text-gray-800">Upload Failed</h2>
+          <p className="text-gray-500 text-center text-sm">{githubModal.error}</p>
+          <button
+            onClick={() => setGithubModal({ open: false })}
+            className="mt-2 px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            Close
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-3xl shadow-md">
+            🚀
+          </div>
+          <h2 className="text-xl font-bold text-gray-800">Uploaded to GitHub!</h2>
+          <p className="text-gray-500 text-center text-sm">Your project has been pushed successfully.</p>
+          <div className="flex gap-3 mt-2">
+            <button
+              onClick={() => { window.open(githubModal.repoUrl, "_blank"); setGithubModal({ open: false }); }}
+              className="px-5 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              View Repo
+            </button>
+            <button
+              onClick={() => setGithubModal({ open: false })}
+              className="px-5 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-medium hover:bg-indigo-100 transition-all duration-200"
+            >
+              Close
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
