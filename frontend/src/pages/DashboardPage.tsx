@@ -229,8 +229,17 @@ const handleConnectGithub = () => {
           <div className="flex-1 min-w-0">
             <p className="truncate font-medium">{project.name}</p>
             <p className="text-sm text-gray-500">
-              {new Date(project.date).toLocaleDateString()}
-            </p>
+  {new Date(project.date).toLocaleDateString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })}
+  <span className="mx-2 text-gray-300">•</span>
+  {new Date(project.date).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  })}
+</p>
           </div>
         </div>
       ))
