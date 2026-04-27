@@ -14,12 +14,14 @@ import {
   Clock,
   ArrowRight,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function DashboardPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
+  const { user } = useAuth();
 
   const recentActivities = [
     { id: 1, action: 'Created E-commerce Store', time: '2 hours ago' },
@@ -68,7 +70,7 @@ const handleConnectGithub = () => {
           <div className="max-w-7xl mx-auto">
             {/* Welcome Section */}
             <div className="mb-8">
-              <h1 className="mb-2">Welcome back!</h1>
+              <h1 className="mb-2">Welcome {user?.name || "User"}!</h1>
               <p className="text-gray-600">
                 Here's what's happening with your projects today.
               </p>
