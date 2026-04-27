@@ -871,6 +871,8 @@ app.delete("/api/version/:id", authenticateToken, async (req, res) => {
 //upload to GitHUb
 app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
   const { projectId } = req.body;
+    
+
 
   try {
     // 1. Get user GitHub token
@@ -878,6 +880,8 @@ app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
       "SELECT github_token, github_username FROM users WHERE id=$1",
       [req.user.id]
     );
+        
+
 
     const user = userResult.rows[0];
 
@@ -897,10 +901,21 @@ app.post("/api/uploadToGithub", authenticateToken, async (req, res) => {
     if (projectResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Project not found" });
     }
+    const project = projectResult.rows[0];  // ← ADD THIS LINE
 
-    const project = projectResult.rows[0];
 
-    const repoName = project.project_name.replace(/\s+/g, "-").toLowerCase();
+    const repoName = (
+  project.project_name
+    .replace(/[^a-zA-Z0-9\s-]/g, "")
+    .trim()
+    .replace(/Project$/i, "")          // ← remove trailing "Project" word
+    .trim()
+    .replace(/\s+/g, "-")
+    .toLowerCase()
+    .replace(/^-+|-+$/g, "")
+  || `project-${projectId}`
+).substring(0, 100) || `project-${projectId}`; 
+    
 
     const headers = {
       Authorization: `token ${user.github_token}`
