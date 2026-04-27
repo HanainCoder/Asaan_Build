@@ -9,8 +9,12 @@ import {
   Settings,
   LogOut,
   X,
+  GitBranch,
+  LayoutTemplate,
+  History,
   Blocks,
-  HelpCircle
+  HelpCircle,
+  LifeBuoy
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,11 +32,11 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
     { icon: PlusCircle, label: t('createNewApp'), path: '/prompt' },
     { icon: FolderKanban, label: t('myProjects'), path: '/projects' },
-    { icon: HelpCircle, label: t(' Version Control '), path: '/version' },
-    { icon: HelpCircle, label: t('Templates Hub'), path: '/templates' },
-    { icon: HelpCircle, label: t('Prompt History Page'), path: '/prompt-history' },
+    { icon: GitBranch, label: t(' Version Control '), path: '/version' },
+    { icon: LayoutTemplate, label: t('Templates Hub'), path: '/templates' },
+    { icon: History, label: t('Prompt History Page'), path: '/prompt-history' },
     { icon: Settings, label: t('settings'), path: '/settings' },
-    { icon: HelpCircle, label: t('support'), path: '/support' },
+    { icon: LifeBuoy, label: t('support'), path: '/support' },
     
 
 

@@ -10,7 +10,12 @@ import {
   ChevronDown,
   ChevronUp,
   Trash2, Download,
-  Eye, GitCompare
+  Eye, GitCompare,
+   Layers3,
+  FolderGit2,
+  RotateCcw,
+  Sparkles,
+  Code2
 } from "lucide-react";
 
 export function VersionControlPage() {
@@ -28,6 +33,13 @@ export function VersionControlPage() {
   const [previewVersion, setPreviewVersion] = useState<{ code: string; version: number } | null>(null);
   const [selectedForCompare, setSelectedForCompare] = useState<any[]>([]);
   const [compareModal, setCompareModal] = useState<{ v1: any; v2: any } | null>(null);
+  const [versionStats, setVersionStats] = useState({
+  totalVersions: 0,
+  topProject: null as any,
+  restoredVersions: 0,
+  promptVersions: 0,
+  codeVersions: 0,
+});
 
   const token = localStorage.getItem("token");
 
@@ -57,6 +69,27 @@ export function VersionControlPage() {
     };
     fetchProjects();
   }, [user]);
+  useEffect(() => {
+  if (!user?.id || !token) return;
+
+  const fetchVersionStats = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/version/stats/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setVersionStats(data);
+      }
+    } catch (err) {
+      console.error("Error loading version stats:", err);
+    }
+  };
+
+  fetchVersionStats();
+}, [user]);
 
   const getVersionIcon = (editType: string) => {
     if (editType === "initial") return { icon: "🚀", color: "bg-green-500" };
@@ -208,6 +241,84 @@ export function VersionControlPage() {
 
             {/* Projects */}
             <div className="space-y-4">
+              {/* Version Analytics Cards */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+
+  {/* Total Versions */}
+  <div className="bg-white rounded-2xl border shadow-sm p-5 
+  transition-all duration-300 
+  hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+    <div className="flex items-center justify-between">
+      <div className="p-3 rounded-xl bg-blue-100">
+        <Layers3 className="size-5 text-blue-600" />
+      </div>
+      <span className="text-xs text-blue-500 font-medium">All Saved</span>
+    </div>
+    <h3 className="text-2xl font-bold mt-4">{versionStats.totalVersions}</h3>
+    <p className="text-sm text-gray-500 mt-1">Total Versions</p>
+  </div>
+
+  {/* Most Versioned Project */}
+  <div className="bg-white rounded-2xl border shadow-sm p-5 
+  transition-all duration-300 
+  hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+    <div className="flex items-center justify-between">
+      <div className="p-3 rounded-xl bg-purple-100">
+        <FolderGit2 className="size-5 text-purple-600" />
+      </div>
+      <span className="text-xs text-purple-500 font-medium">
+        {versionStats.topProject?.total_versions || 0} Builds
+      </span>
+    </div>
+    <h3 className="text-lg font-bold mt-4 line-clamp-2 leading-snug">
+  {versionStats.topProject?.project_name || "N/A"}
+</h3>
+    <p className="text-sm text-gray-500 mt-1">Most Versioned</p>
+  </div>
+
+  {/* Restored Versions */}
+  <div className="bg-white rounded-2xl border shadow-sm p-5 
+  transition-all duration-300 
+  hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+    <div className="flex items-center justify-between">
+      <div className="p-3 rounded-xl bg-amber-100">
+        <RotateCcw className="size-5 text-amber-600" />
+      </div>
+      <span className="text-xs text-amber-500 font-medium">Recovered</span>
+    </div>
+    <h3 className="text-2xl font-bold mt-4">{versionStats.restoredVersions}</h3>
+    <p className="text-sm text-gray-500 mt-1">Restored Versions</p>
+  </div>
+
+  {/* Prompt Edited */}
+  <div className="bg-white rounded-2xl border shadow-sm p-5 
+  transition-all duration-300 
+  hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+    <div className="flex items-center justify-between">
+      <div className="p-3 rounded-xl bg-indigo-100">
+        <Sparkles className="size-5 text-indigo-600" />
+      </div>
+      <span className="text-xs text-indigo-500 font-medium">AI Modified</span>
+    </div>
+    <h3 className="text-2xl font-bold mt-4">{versionStats.promptVersions}</h3>
+    <p className="text-sm text-gray-500 mt-1">Prompt Edited</p>
+  </div>
+
+  {/* Code Edited */}
+  <div className="bg-white rounded-2xl border shadow-sm p-5 
+  transition-all duration-300 
+  hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]">
+    <div className="flex items-center justify-between">
+      <div className="p-3 rounded-xl bg-emerald-100">
+        <Code2 className="size-5 text-emerald-600" />
+      </div>
+      <span className="text-xs text-emerald-500 font-medium">Manual Dev</span>
+    </div>
+    <h3 className="text-2xl font-bold mt-4">{versionStats.codeVersions}</h3>
+    <p className="text-sm text-gray-500 mt-1">Code Edited</p>
+  </div>
+
+</div>
               {projects.map((project) => (
                 <div key={project.id} className="bg-white rounded-2xl border shadow-sm">
 

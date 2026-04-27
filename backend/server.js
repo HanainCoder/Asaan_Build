@@ -1407,6 +1407,71 @@ app.get("/api/user/stats", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+// version analytics stat cards
+app.get("/api/version/stats/:userId", authenticateToken, async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // 1. Total Versions
+    const totalVersionsResult = await pool.query(`
+      SELECT COUNT(*) AS total
+      FROM project_versions pv
+      JOIN generated_projects gp ON pv.project_id = gp.id
+      WHERE gp.user_id = $1
+    `, [userId]);
+
+    // 2. Most Versioned Project (if same count then latest created version wins)
+    const topProjectResult = await pool.query(`
+  SELECT gp.project_name, COUNT(pv.id) AS total_versions, MAX(pv.created_at) AS latest_activity
+  FROM generated_projects gp
+  JOIN project_versions pv ON pv.project_id = gp.id
+  WHERE gp.user_id = $1
+  GROUP BY gp.id, gp.project_name
+  ORDER BY total_versions DESC, latest_activity DESC
+  LIMIT 1
+`, [userId]);
+
+    // 3. Restored Versions
+    const restoredResult = await pool.query(`
+      SELECT COUNT(*) AS total
+      FROM project_versions pv
+      JOIN generated_projects gp ON pv.project_id = gp.id
+      WHERE gp.user_id = $1
+      AND pv.edit_type ILIKE 'Restored%'
+    `, [userId]);
+
+    // 4. Prompt Edited Versions
+    const promptResult = await pool.query(`
+      SELECT COUNT(*) AS total
+      FROM project_versions pv
+      JOIN generated_projects gp ON pv.project_id = gp.id
+      WHERE gp.user_id = $1
+      AND pv.edit_type = 'prompt'
+    `, [userId]);
+
+    // 5. Code Edited Versions
+    const codeResult = await pool.query(`
+      SELECT COUNT(*) AS total
+      FROM project_versions pv
+      JOIN generated_projects gp ON pv.project_id = gp.id
+      WHERE gp.user_id = $1
+      AND pv.edit_type = 'code'
+    `, [userId]);
+
+    res.json({
+      success: true,
+      totalVersions: Number(totalVersionsResult.rows[0].total),
+      topProject: topProjectResult.rows[0] || null,
+      restoredVersions: Number(restoredResult.rows[0].total),
+      promptVersions: Number(promptResult.rows[0].total),
+      codeVersions: Number(codeResult.rows[0].total),
+    });
+
+  } catch (err) {
+    console.error("VERSION STATS ERROR:", err);
+    res.status(500).json({ success: false });
+  }
+});
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);
