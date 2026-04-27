@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
-import { User, Bell, Globe, Moon, Sun, Lock, Github ,  Eye, EyeOff} from 'lucide-react';
+import { User, Bell, Globe, Moon, Sun, Lock, Github, Eye, EyeOff } from 'lucide-react';
 
 // ── Reusable Toggle ──────────────────────────────────────
 function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
@@ -36,26 +36,32 @@ export function SettingsPage() {
   });
 
   // ── Provider checks ──────────────────────────────────────
-  const isGoogleUser  = user?.provider?.includes('google') ?? false;
-  const isGithubUser  = user?.provider?.includes('github') ?? false;
-const hasPassword = user?.login_method === 'local';
-// ── Eye toggle state
-const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-const [showNewPassword, setShowNewPassword]         = useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // ── Profile state ────────────────────────────────────────
-  const [name, setName] = useState(user?.name || '');
+  const isGoogleUser = user?.provider?.includes('google') ?? false;
+  const isGithubUser = user?.provider?.includes('github') ?? false;
+  const hasPassword  = user?.login_method === 'local';
+
+  // ── Eye toggle state ─────────────────────────────────────
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword]         = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // ── Profile state ─────────────────────────────────────────
+  const [name, setName]                 = useState(user?.name || '');
   const [profileLoading, setProfileLoading] = useState(false);
-  const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [profileMsg, setProfileMsg]     = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // ── Password state ───────────────────────────────────────
-  const [currentPassword, setCurrentPassword]   = useState('');
-  const [newPassword, setNewPassword]           = useState('');
-  const [confirmPassword, setConfirmPassword]   = useState('');
-  const [passwordLoading, setPasswordLoading]   = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  // ── Avatar state ──────────────────────────────────────────
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarMsg, setAvatarMsg]         = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // ── Save name ────────────────────────────────────────────
+  // ── Password state ────────────────────────────────────────
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword]         = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMsg, setPasswordMsg]         = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // ── Save name ─────────────────────────────────────────────
   const handleSaveProfile = async () => {
     if (!name.trim()) {
       setProfileMsg({ type: 'error', text: 'Name cannot be empty' });
@@ -87,7 +93,37 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     }
   };
 
-  // ── Change password ──────────────────────────────────────
+  // ── Avatar upload ─────────────────────────────────────────
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarLoading(true);
+    setAvatarMsg(null);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/user/avatar', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        updateUser({ avatar: data.avatar });
+        setAvatarMsg({ type: 'success', text: 'Profile photo updated!' });
+      } else {
+        setAvatarMsg({ type: 'error', text: data.message });
+      }
+    } catch {
+      setAvatarMsg({ type: 'error', text: 'Upload failed' });
+    } finally {
+      setAvatarLoading(false);
+      e.target.value = '';
+    }
+  };
+
+  // ── Change password ───────────────────────────────────────
   const handleSavePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordMsg({ type: 'error', text: 'All fields are required' });
@@ -156,37 +192,71 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
                 </div>
 
                 <div className="space-y-4">
+
                   {/* Avatar + badges */}
                   <div className="flex items-center gap-6 flex-wrap">
-                    <img
-                      src={
-                        user?.avatar ||
-                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'default'}`
-                      }
-                      alt="Profile"
-                      className="size-20 rounded-full border-4 border-gray-100 object-cover"
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {isGoogleUser && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 text-sm rounded-full border border-red-200">
-                          🔗 Signed in with Google
-                        </span>
-                      )}
-                      {isGithubUser && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full border border-gray-300">
-                          <Github className="size-3.5" />
-                          GitHub
-                          {user?.github_username && (
-                            <span className="text-gray-500">(@{user.github_username})</span>
-                          )}
-                        </span>
-                      )}
-                      {!isGoogleUser && !isGithubUser && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-full border border-blue-200">
-                          ✉️ Email account
-                        </span>
-                      )}
+
+                    {/* Avatar with upload overlay */}
+                    <div className="relative">
+                      <img
+                        src={
+                          user?.avatar ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'default'}`
+                        }
+                        alt="Profile"
+                        className="size-20 rounded-full border-4 border-gray-100 object-cover"
+                      />
+                      <label
+                        htmlFor="avatar-upload"
+                        className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        {avatarLoading ? (
+                          <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <span className="text-white text-xs font-medium">Change</span>
+                        )}
+                      </label>
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg,image/webp"
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                        disabled={avatarLoading}
+                      />
                     </div>
+
+                    {/* Badges + messages */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {isGoogleUser && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 text-sm rounded-full border border-red-200">
+                            🔗 Signed in with Google
+                          </span>
+                        )}
+                        {isGithubUser && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full border border-gray-300">
+                            <Github className="size-3.5" />
+                            GitHub
+                            {user?.github_username && (
+                              <span className="text-gray-500">(@{user.github_username})</span>
+                            )}
+                          </span>
+                        )}
+                        {!isGoogleUser && !isGithubUser && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-full border border-blue-200">
+                            ✉️ Email account
+                          </span>
+                        )}
+                      </div>
+                      {avatarMsg && (
+                        <p className={`text-sm ${avatarMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                          {avatarMsg.type === 'success' ? '✅' : '❌'} {avatarMsg.text}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400">Click on photo to change • Max 2MB • JPG, PNG, WebP</p>
+                    </div>
+
                   </div>
 
                   {/* Name + Email */}
@@ -241,66 +311,66 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
                   <div className="space-y-4">
                     <div>
-  <label className="block mb-2 text-gray-700">Current Password</label>
-  <div className="relative">
-    <input
-      type={showCurrentPassword ? 'text' : 'password'}
-      value={currentPassword}
-      onChange={(e) => setCurrentPassword(e.target.value)}
-      placeholder="Enter current password"
-      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent pr-12"
-    />
-    <button
-      type="button"
-      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-    >
-      {showCurrentPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
-    </button>
-  </div>
-</div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-  <label className="block mb-2 text-gray-700">New Password</label>
-  <div className="relative">
-    <input
-      type={showNewPassword ? 'text' : 'password'}
-      value={newPassword}
-      onChange={(e) => setNewPassword(e.target.value)}
-      placeholder="Enter new password"
-      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent pr-12"
-    />
-    <button
-      type="button"
-      onClick={() => setShowNewPassword(!showNewPassword)}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-    >
-      {showNewPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
-    </button>
-  </div>
-</div>
-                      <div>
-  <label className="block mb-2 text-gray-700">Confirm Password</label>
-  <div className="relative">
-    <input
-      type={showConfirmPassword ? 'text' : 'password'}
-      value={confirmPassword}
-      onChange={(e) => setConfirmPassword(e.target.value)}
-      placeholder="Confirm new password"
-      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent pr-12"
-    />
-    <button
-      type="button"
-      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-    >
-      {showConfirmPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
-    </button>
-  </div>
-</div>
+                      <label className="block mb-2 text-gray-700">Current Password</label>
+                      <div className="relative">
+                        <input
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Enter current password"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent pr-12"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showCurrentPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Password message */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block mb-2 text-gray-700">New Password</label>
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? 'text' : 'password'}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Enter new password"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent pr-12"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showNewPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-gray-700">Confirm Password</label>
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm new password"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent pr-12"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showConfirmPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
                     {passwordMsg && (
                       <p className={`text-sm ${passwordMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
                         {passwordMsg.type === 'success' ? '✅' : '❌'} {passwordMsg.text}

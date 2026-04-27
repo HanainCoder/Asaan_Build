@@ -9,7 +9,9 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || "asaanbuild_secret";
 import OpenAI from "openai";
 import axios from "axios";
-
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 //for  open ai  
@@ -1297,6 +1299,61 @@ app.put("/api/user/update", authenticateToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ── uploads folder create karo agar nahi hai
+const uploadsDir = './uploads';
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
+// ── Multer config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './uploads/');
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `avatar-${req.user.id}-${Date.now()}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only jpg, png, webp allowed'));
+    }
+  },
+});
+
+// ── Static folder serve karo
+app.use('/uploads', express.static('./uploads'));
+
+// ── Avatar upload endpoint
+app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.json({ success: false, message: 'No file uploaded' });
+    }
+
+    const avatarUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+
+    await pool.query(
+      'UPDATE users SET avatar = $1 WHERE id = $2',
+      [avatarUrl, req.user.id]
+    );
+
+    res.json({ success: true, avatar: avatarUrl });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
