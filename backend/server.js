@@ -1356,7 +1356,25 @@ app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+// for Dashboard anlytics -total projects, versions,
+app.get("/api/user/stats", authenticateToken, async (req, res) => {
+  try {
+    const versionsResult = await pool.query(
+      `SELECT COUNT(*) as total FROM project_versions 
+       WHERE project_id IN (
+         SELECT id FROM generated_projects WHERE user_id = $1
+       )`,
+      [req.user.id]
+    );
 
+    res.json({
+      success: true,
+      totalVersions: parseInt(versionsResult.rows[0].total)
+    });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);

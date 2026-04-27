@@ -22,6 +22,15 @@ export function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+  totalProjects: 0,
+  thisMonth: 0,
+  totalVersions: 0,
+  lastActive: 'N/A'
+});
+const [recentProjects, setRecentProjects] = useState<{id: number, name: string, date: string}[]>([]);
+
+
 
   const recentActivities = [
     { id: 1, action: 'Created E-commerce Store', time: '2 hours ago' },
@@ -29,6 +38,52 @@ export function DashboardPage() {
     { id: 3, action: 'Generated Restaurant App', time: '1 day ago' },
     { id: 4, action: 'Deployed Blog Platform', time: '2 days ago' },
   ];
+  //for stats data
+  useEffect(() => {
+  const fetchStats = async () => {
+    const token = localStorage.getItem('token');
+
+    // 1. Projects data
+    const projRes = await fetch(`http://localhost:5000/api/myProjects?userId=${user?.id}`);
+    const projData = await projRes.json();
+
+    if (projData.success) {
+      const projects = projData.projects;
+      const now = new Date();
+
+      // Total projects
+      const total = projects.length;
+
+      // This month
+      const thisMonth = (projects as { date: string }[]).filter(p => {
+  const d = new Date(p.date);
+  return d.getMonth() === now.getMonth() &&
+         d.getFullYear() === now.getFullYear();
+}).length;
+
+      // Last active
+      const lastActive = projects.length > 0
+        ? new Date(projects[0].date).toLocaleDateString()
+        : 'N/A';
+
+      // 2. Versions data
+      const verRes = await fetch('http://localhost:5000/api/user/stats', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const verData = await verRes.json();
+
+      setStats({
+        totalProjects: total,
+        thisMonth,
+        totalVersions: verData.totalVersions || 0,
+        lastActive
+      });
+      setRecentProjects(projects.slice(0, 4));
+    }
+  };
+
+  if (user?.id) fetchStats();
+}, [user]);
   useEffect(() => {
   const checkGithub = async () => {
     const token = localStorage.getItem("token");
@@ -98,80 +153,90 @@ const handleConnectGithub = () => {
               <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
 
               <StatCard
-                title={t('totalProjects')}
-                value="12"
-                icon={FolderKanban}
-                trend="+3 this month"
-                color="blue"
-              />
+  title={t('totalProjects')}
+  value={stats.totalProjects.toString()}
+  icon={FolderKanban}
+  trend="All time"
+  color="blue"
+/>
               </div>
               <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
               <StatCard
-                title="Active Apps"
-                value="8"
-                icon={TrendingUp}
-                trend="+2 this week"
-                color="green"
-              />
+  title="This Month"
+  value={stats.thisMonth.toString()}
+  icon={TrendingUp}
+  trend="New projects"
+  color="green"
+/>
               </div>
                <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
               <StatCard
-                title="Templates Used"
-                value="15"
-                icon={Sparkles}
-                trend="+5 this month"
-                color="purple"
-              />
+  title="Total Versions"
+  value={stats.totalVersions.toString()}
+  icon={Sparkles}
+  trend="Across all projects"
+  color="purple"
+/>
               </div>
                <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-              <StatCard
-                title="Hours Saved"
-                value="47"
-                icon={Clock}
-                trend="+12 this month"
-                color="orange"
-              />
+             <StatCard
+  title="Last Active"
+  value={stats.lastActive}
+  icon={Clock}
+  trend="Most recent project"
+  color="orange"
+/>
               </div>
               
             </div>
 
             <div className="grid lg:grid-cols-3 gap-6">
               {/* Recent Activity */}
-              <div className="lg:col-span-2 bg-white rounded-xl p-6 border border-gray-200">
-                <div className="flex items-center justify-between mb-6">
-                  <h2>{t('recentActivity')}</h2>
-                  <button className="text-sm text-blue-600 hover:underline">
-                    View all
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {recentActivities.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="
-                      flex items-start gap-4 p-4 rounded-lg cursor-pointer
+              
+<div className="lg:col-span-2 bg-white rounded-xl p-6 border border-gray-200">
+  <div className="flex items-center justify-between mb-6">
+    <h2>{t('recentActivity')}</h2>
+    <button 
+  onClick={() => navigate('/projects')}
+  className="text-sm text-blue-600 "
+>
+  My Projects 
+</button>
+  </div>
 
-                      transition-all duration-300
-                      hover:bg-gray-50
-
-                       hover:shadow-md
-                        hover:scale-[1.02]
-
-                       border border-transparent
-                      hover:border-blue-200
-                          "
-                      >
-                      <div className="p-2 bg-blue-100 rounded-lg shrink-0">
-                        <Sparkles className="size-5 text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate">{activity.action}</p>
-                        <p className="text-sm text-gray-500">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+  <div className="space-y-4">
+    {recentProjects.length === 0 ? (
+      // ── 0 projects ──
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="p-4 bg-gray-100 rounded-full mb-3">
+          <Sparkles className="size-6 text-gray-400" />
+        </div>
+        <p className="text-gray-500">No projects yet</p>
+        <p className="text-sm text-gray-400 mt-1">Generate your first app to see activity here</p>
+      </div>
+    ) : (
+      recentProjects.map((project) => (
+        <div
+          key={project.id}
+          
+          className="flex items-start gap-4 p-4 rounded-lg cursor-pointer
+            transition-all duration-300 hover:bg-gray-50 hover:shadow-md
+            hover:scale-[1.02] border border-transparent hover:border-blue-200"
+        >
+          <div className="p-2 bg-blue-100 rounded-lg shrink-0">
+            <Sparkles className="size-5 text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="truncate font-medium">{project.name}</p>
+            <p className="text-sm text-gray-500">
+              {new Date(project.date).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+</div>
 
               {/* Quick Actions */}
               <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl p-6 text-white">
