@@ -23,6 +23,7 @@ export function SupportPage() {
   const [message, setMessage] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
   const [search, setSearch] = useState("");
+const [successModal, setSuccessModal] = useState(false);
 
   const faqs = [
   {
@@ -90,7 +91,7 @@ const DEFAULT_STEPS = [
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
-    alert('Thank you for your message! Our support team will get back to you soon.');
+    setSuccessModal(true);
   };
   const completed = steps.filter((s: OnboardingStep) => s.done).length;
   const progress = (completed / steps.length) * 100;
@@ -151,7 +152,7 @@ const DEFAULT_STEPS = [
 
   <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
     <div
-      className="bg-blue-600 h-2 rounded-full"
+      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-500"
       style={{ width: `${progress}%` }}
     />
   </div>
@@ -221,7 +222,7 @@ const DEFAULT_STEPS = [
             {/* Section */}
             
 <div className="mb-8">
-  <h2 className="font-semibold mb-4">Quick Tips</h2>
+  <h2 className="font-semibold mb-4 text-center">Quick Tips</h2>
   <div className="grid md:grid-cols-3 gap-4">
     <div className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
       <div className="inline-flex items-center justify-center size-12 bg-blue-50 rounded-xl mb-4">
@@ -334,6 +335,23 @@ const DEFAULT_STEPS = [
           </div>
         </main>
       </div>
+      {successModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full flex flex-col items-center gap-4 border border-indigo-100">
+      <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-3xl shadow-md">
+        ✉️
+      </div>
+      <h2 className="text-xl font-bold text-gray-800">Message Sent!</h2>
+      <p className="text-gray-500 text-center text-sm">Thank you! Our support team will get back to you within 24 hours.</p>
+      <button
+        onClick={() => setSuccessModal(false)}
+        className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-200"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
