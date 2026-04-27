@@ -11,47 +11,60 @@ interface User {
   name?: string;
   email: string;
   avatar?: string;
+  provider?: string;        // ⭐ NEW
+  github_username?: string; // ⭐ NEW
+    has_password?: boolean; // ⭐ ADD
+      login_method?: 'local' | 'google' | 'github'; // ⭐ ADD
+
+
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name:string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  setUserFromToken: (user: User) => void; // ⭐ ADD THIS
+  setUserFromToken: (user: User) => void;
+  updateUser: (updated: Partial<User>) => void; // ⭐ NEW
   isAuthenticated: boolean;
-  loading: boolean; // ⭐ ADD
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ AUTO LOGIN ON PAGE REFRESH
+  // ✅ PAGE REFRESH PE FULL PROFILE FETCH KARO
   useEffect(() => {
   const token = localStorage.getItem("token");
 
   if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
+    // JWT se login_method nikalo
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const loginMethod = payload.login_method;
 
-      setUser({
-        id: payload.id,
-        email: payload.email,
-      });
-    } catch {
-      localStorage.removeItem("token");
-    }
+    fetch("http://localhost:5000/api/user/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setUser({ ...data.user, login_method: loginMethod }); // ⭐ merge
+        } else {
+          localStorage.removeItem("token");
+        }
+      })
+      .catch(() => localStorage.removeItem("token"))
+      .finally(() => setLoading(false));
+  } else {
+    setLoading(false);
   }
-
-  setLoading(false); // ⭐ IMPORTANT
 }, []);
 
   // 🔐 LOGIN
-  const login = async (email: string, password: string) => {
+ const login = async (email: string, password: string) => {
     const res = await fetch("http://localhost:5000/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -59,15 +72,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const data = await res.json();
-
     if (!data.success) throw new Error(data.message);
 
     localStorage.setItem("token", data.token);
-    setUser(data.user);
+
+    // ✅ profile fetch + login_method set karo
+    const profileRes = await fetch("http://localhost:5000/api/user/profile", {
+      headers: { Authorization: `Bearer ${data.token}` },
+    });
+    const profileData = await profileRes.json();
+    if (profileData.success) {
+      setUser({ ...profileData.user, login_method: 'local' }); // ⭐ local hardcode
+    } else {
+      setUser({ ...data.user, login_method: 'local' });
+    }
   };
 
   // 📝 REGISTER
-  const register = async (name:string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string) => {
     const res = await fetch("http://localhost:5000/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -75,7 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const data = await res.json();
-
     if (!data.success) throw new Error(data.message);
   };
 
@@ -85,9 +106,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  // ⭐ USED BY AuthSuccess PAGE
+  // ⭐ GOOGLE/GITHUB LOGIN KE BAAD
   const setUserFromToken = (userData: User) => {
     setUser(userData);
+  };
+
+  // ⭐ SETTINGS PAGE PE UPDATE KE BAAD
+  const updateUser = (updated: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...updated } : prev));
   };
 
   return (
@@ -97,10 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
-        setUserFromToken, // ⭐ ADD HERE
+        setUserFromToken,
+        updateUser, // ⭐ NEW
         isAuthenticated: !!user,
-        loading, // ⭐ ADD THIS
-
+        loading,
       }}
     >
       {children}

@@ -25,5 +25,5 @@ export function AuthSuccess() {
     }
   }, []);
 
-  return <p>Logging in...</p>;
+  return ;
 }

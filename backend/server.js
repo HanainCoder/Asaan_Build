@@ -64,7 +64,7 @@ app.get(
   (req, res) => {
 
     const token = jwt.sign(
-      { id: req.user.id, email: req.user.email,  name: req.user.name },
+      { id: req.user.id, email: req.user.email,  name: req.user.name, login_method: 'google' },
       JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -124,7 +124,7 @@ app.get(
         );
 
         const token = jwt.sign(
-          { id: userId },
+          { id: userId, login_method: 'github'},
           process.env.JWT_SECRET,
           { expiresIn: "1d" }
         );
@@ -144,7 +144,7 @@ app.get(
       );
 
       const token = jwt.sign(
-        { id: req.user.id },
+        { id: req.user.id, login_method: 'github'  },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
       );
@@ -536,7 +536,7 @@ app.post("/api/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name },
+      { id: user.id, email: user.email, name: user.name ,login_method: 'local' },
       JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -1222,6 +1222,81 @@ app.get("/api/prompts/stats", authenticateToken, async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ success: false });
+  }
+});
+// ── GET PROFILE ──────────────────────────────────────────
+app.get("/api/user/profile", authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, email, avatar, provider, github_username,
+       (password IS NOT NULL AND password != '') AS has_password
+       FROM users WHERE id = $1`,
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    res.json({ success: true, user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+// ── UPDATE PROFILE / PASSWORD ─────────────────────────────
+app.put("/api/user/update", authenticateToken, async (req, res) => {
+  const { name, currentPassword, newPassword } = req.body;
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM users WHERE id = $1", 
+      [req.user.id]
+    );
+    const user = result.rows[0];
+
+    // ── Update name
+    if (name && name.trim()) {
+      await pool.query(
+        "UPDATE users SET name = $1 WHERE id = $2",
+        [name.trim(), user.id]
+      );
+    }
+
+    // ── Update password (sirf local users)
+    if (newPassword) {
+      const hasLocalPassword = !user.provider || user.provider.includes("local");
+
+      if (!hasLocalPassword) {
+        return res.json({
+          success: false,
+          message: "Password change not available for social login accounts",
+        });
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.json({ success: false, message: "Current password is incorrect" });
+      }
+
+      const hashed = await bcrypt.hash(newPassword, 10);
+      await pool.query(
+        "UPDATE users SET password = $1 WHERE id = $2",
+        [hashed, user.id]
+      );
+    }
+
+    // ── Return updated user
+    const updated = await pool.query(
+      "SELECT id, name, email, avatar, provider, github_username FROM users WHERE id = $1",
+      [req.user.id]
+    );
+
+    res.json({ success: true, user: updated.rows[0] });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
