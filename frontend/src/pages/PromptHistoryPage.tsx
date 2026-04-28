@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Sidebar } from "../components/Sidebar";
 import { Header } from "../components/Header";
+import { useLanguage } from "@/contexts/LanguageContext";
+
 import {
   History,
   Clock,
@@ -29,6 +31,8 @@ type PromptItem = {
 
 export function PromptHistoryPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { t } = useLanguage();
+  
   const [recentPrompts, setRecentPrompts] = useState<PromptItem[]>([]);
   const [allPrompts, setAllPrompts] = useState<PromptItem[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -209,9 +213,9 @@ const getInsight = () => {
             <div className="inline-flex items-center justify-center size-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4">
               <History className="size-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Prompt History</h1>
+            <h1 className="text-2xl font-bold mb-2">{t("promptHistoryTitle")}</h1>
             <p className="text-gray-500">
-              Track, improve, and reuse your AI prompts
+              {t("promptHistorySubtitle")}
             </p>
           </div>
 

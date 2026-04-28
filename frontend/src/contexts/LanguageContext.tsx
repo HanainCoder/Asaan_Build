@@ -97,7 +97,44 @@ const translations: Record<Language, Record<string, string>> = {
     save: 'Save',
     loading: 'Loading...',
     generatingApp: 'Generating your app...',
+//version control
+// Version Control
+versionControlTitle: "Version Control",
+versionControlSubtitle: "Click a version to open it in Code Viewer.",
+totalVersions: "Total Versions",
+mostVersioned: "Most Versioned",
+restoredVersions: "Restored Versions",
+promptEdited: "Prompt Edited",
+codeEdited: "Code Edited",
+compare: "Compare",
+clear: "Clear",
+restore: "Restore",
+
+download: "Download",
+preview: "Preview",
+noVersions: "No versions found",
+allSaved: "All Saved",
+aiModified: "AI Modified",
+manualDev: "Manual Development",
+recovered: "Recovered",
+version: "Version",
+
+//// Templates Gallery
+templatesGalleryTitle: "Template Gallery",
+templatesGallerySubtitle: "Pick a ready-made template and generate your page instantly",
+
+thisMonth: "This Month",
+totalVersion: "Total Versions",
+lastActive: "Last Active",
+
+// Prompt History
+promptHistoryTitle: "Prompt History",
+promptHistorySubtitle: "Track, improve, and reuse your AI prompts",
   },
+
+ 
+ 
+
   ur: {
     // Auth
     register: 'رجسٹر کریں',
@@ -182,6 +219,41 @@ const translations: Record<Language, Record<string, string>> = {
     save: 'محفوظ کریں',
     loading: 'لوڈ ہو رہا ہے...',
     generatingApp: 'آپ کی ایپ بنائی جا رہی ہے...',
+    
+    //version control
+   // Version Control
+versionControlTitle: "ورژن کنٹرول",
+versionControlSubtitle: "ورژن کھولنے کے لیے اس پر کلک کریں۔",
+totalVersions: "کل ورژنز",
+mostVersioned: "سب سے زیادہ ورژن",
+restoredVersions: "بحال شدہ ورژنز",
+promptEdited: "AI میں تبدیلی",
+codeEdited: "کوڈ میں تبدیلی",
+compare: "موازنہ کریں",
+clear: "صاف کریں",
+restore: "بحال کریں",
+download: "ڈاؤن لوڈ",
+preview: "پیش نظارہ",
+noVersions: "کوئی ورژن موجود نہیں",
+allSaved: "تمام محفوظ",
+aiModified: "AI کی تبدیلی",
+manualDev: "دستی ترقی",
+recovered: "بحال شدہ",
+version: "ورژن",
+
+// Templates Gallery
+templatesGalleryTitle: "ٹیمپلیٹ گیلری",
+templatesGallerySubtitle: "تیار شدہ ٹیمپلیٹ منتخب کریں اور فوری طور پر اپنی ویب سائٹ بنائیں",
+
+// Stats Cards (Urdu)
+thisMonth: "اس مہینے",
+totalVersion: "کل ورژنز",
+lastActive: "آخری سرگرمی",
+
+// Prompt History (Urdu)
+promptHistoryTitle: "پرومپٹ ہسٹری",
+promptHistorySubtitle: "اپنے اے آئی پرومپٹس کو ٹریک کریں، بہتر بنائیں اور دوبارہ استعمال کریں",
+
   },
 };
 

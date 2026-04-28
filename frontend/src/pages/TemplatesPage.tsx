@@ -133,9 +133,9 @@ export function TemplatesPage() {
             {/* ── Page header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
               <div>
-                <h1 className="mb-2">Template Gallery</h1>
+                <h1 className="mb-2">{t("templatesGalleryTitle")}</h1>
                 <p className="text-gray-600">
-                  Pick a ready-made template and generate your page instantly
+                  {t("templatesGallerySubtitle")}
                 </p>
               </div>
               <button

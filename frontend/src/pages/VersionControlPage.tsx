@@ -235,8 +235,8 @@ export function VersionControlPage() {
                 shadow-lg rounded-2xl mb-4">
                 <GitBranch className="size-8 text-white" />
               </div>
-              <h1 className="text-2xl font-bold mb-2">Version Control</h1>
-              <p className="text-gray-600">Click a version to open it in Code Viewer.</p>
+              <h1 className="text-2xl font-bold mb-2"> {t("versionControlTitle")}</h1>
+              <p className="text-gray-600">{t("versionControlSubtitle")}</p>
             </div>
 
             {/* Projects */}

@@ -162,7 +162,7 @@ const handleConnectGithub = () => {
               </div>
               <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
               <StatCard
-  title="This Month"
+  title={t('thisMonth')}
   value={stats.thisMonth.toString()}
   icon={TrendingUp}
   trend="New projects"
@@ -171,7 +171,7 @@ const handleConnectGithub = () => {
               </div>
                <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
               <StatCard
-  title="Total Versions"
+  title={t('totalVersion')}
   value={stats.totalVersions.toString()}
   icon={Sparkles}
   trend="Across all projects"
@@ -180,7 +180,7 @@ const handleConnectGithub = () => {
               </div>
                <div className="transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
              <StatCard
-  title="Last Active"
+  title={t('lastActive')}
   value={stats.lastActive}
   icon={Clock}
   trend="Most recent project"
