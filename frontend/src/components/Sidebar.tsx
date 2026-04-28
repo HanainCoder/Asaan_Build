@@ -32,9 +32,9 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
     { icon: PlusCircle, label: t('createNewApp'), path: '/prompt' },
     { icon: FolderKanban, label: t('myProjects'), path: '/projects' },
-    { icon: GitBranch, label: t(' Version Control '), path: '/version' },
-    { icon: LayoutTemplate, label: t('Templates Hub'), path: '/templates' },
-    { icon: History, label: t('Prompt History Page'), path: '/prompt-history' },
+    { icon: GitBranch, label: t('versionControl'), path: '/version' },
+    { icon: LayoutTemplate, label: t('templatesHub'), path: '/templates' },
+    { icon: History, label: t('promptHistory'), path: '/prompt-history' },
     { icon: Settings, label: t('settings'), path: '/settings' },
     { icon: LifeBuoy, label: t('support'), path: '/support' },
     

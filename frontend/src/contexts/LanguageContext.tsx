@@ -130,6 +130,10 @@ lastActive: "Last Active",
 // Prompt History
 promptHistoryTitle: "Prompt History",
 promptHistorySubtitle: "Track, improve, and reuse your AI prompts",
+
+versionControl: "Version Control",
+templatesHub: "Templates Hub",
+promptHistory: "Prompt History",
   },
 
  
@@ -254,6 +258,10 @@ lastActive: "آخری سرگرمی",
 promptHistoryTitle: "پرومپٹ ہسٹری",
 promptHistorySubtitle: "اپنے اے آئی پرومپٹس کو ٹریک کریں، بہتر بنائیں اور دوبارہ استعمال کریں",
 
+// Sidebar / Navigation (Urdu)
+versionControl: "ورژن کنٹرول",
+templatesHub: "ٹیمپلیٹس ہب",
+promptHistory: "پرومپٹ ہسٹری",
   },
 };
 
