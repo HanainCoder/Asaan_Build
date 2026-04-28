@@ -637,7 +637,7 @@ return;
       )}
 
       {popup.type === "confirm" && (
-        <div className="text-yellow-600 font-semibold mb-2">Confirm</div>
+        <div className=" text-indigo-600 font-semibold mb-2">Confirm</div>
       )}
 
       <p className="text-gray-700 text-sm mb-4">{popup.message}</p>
