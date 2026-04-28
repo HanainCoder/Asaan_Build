@@ -25,5 +25,5 @@ export function AuthSuccess() {
     }
   }, []);
 
-  return ;
+  return null;
 }
