@@ -264,30 +264,46 @@ export function ProjectsPage() {
             )}
 
             {/* Delete modal */}
-            {showDeleteModal && (
-              <div className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-50">
-                <div className="bg-white rounded-xl shadow-lg p-6 w-96">
-                  <h2 className="text-xl font-semibold mb-4">Delete Project?</h2>
-                  <p className="text-gray-600 mb-6">
-                    Are you sure you want to delete this project? This action cannot be undone.
-                  </p>
-                  <div className="flex justify-end gap-4">
-                    <button
-                      onClick={() => setShowDeleteModal(false)}
-                      className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      className="px-4 py-2 rounded-lg bg-red-600 text-black hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Delete modal */}
+{showDeleteModal && (
+  <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl shadow-xl p-6 w-96 flex flex-col items-center gap-4">
+
+      {/* Icon */}
+      <div className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-3xl shadow-md">
+        ⚠️
+      </div>
+
+      {/* Title */}
+      <h2 className="text-xl font-bold text-gray-800">
+        Delete Project?
+      </h2>
+
+      {/* Message */}
+      <p className="text-gray-500 text-center text-sm">
+        Are you sure you want to delete this project? This action cannot be undone.
+      </p>
+
+      {/* Buttons */}
+      <div className="flex gap-3 mt-2">
+        <button
+          onClick={() => setShowDeleteModal(false)}
+          className="px-5 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-medium hover:bg-indigo-100 transition-all duration-200"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleDelete}
+          className="px-5 py-2 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-200"
+        >
+          Delete
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
           </div>
         </main>
       </div>
