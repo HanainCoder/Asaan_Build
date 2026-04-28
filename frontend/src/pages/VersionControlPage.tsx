@@ -40,6 +40,11 @@ export function VersionControlPage() {
   promptVersions: 0,
   codeVersions: 0,
 });
+const [popup, setPopup] = useState<{
+  type: "success" | "error" | "confirm" | null;
+  message: string;
+  onConfirm?: () => void;
+} | null>(null);
 
   const token = localStorage.getItem("token");
 
@@ -136,8 +141,37 @@ export function VersionControlPage() {
   const handleRestore = async (projectId: number, versionId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!token) return;
-    const confirm = window.confirm("Restore this version as current?");
-    if (!confirm) return;
+    setPopup({
+  type: "confirm",
+  message: "Restore this version as current?",
+  onConfirm: async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/project/${projectId}/restore/${versionId}`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setPopup({ type: "success", message: `Restored as Version ${data.version} ✅` });
+
+        setProjectVersions((prev) => {
+          const updated = { ...prev };
+          delete updated[projectId];
+          return updated;
+        });
+
+        setOpenProject(null);
+      } else {
+        setPopup({ type: "error", message: "Restore failed: " + data.message });
+      }
+    } catch (err) {
+      console.error("Restore error:", err);
+    }
+  },
+});
+return;
     try {
       const res = await fetch(
         `http://localhost:5000/api/project/${projectId}/restore/${versionId}`,
@@ -166,8 +200,34 @@ export function VersionControlPage() {
       alert("Cannot delete the initial version.");
       return;
     }
-    const confirm = window.confirm(`Delete Version ${versionNumber}? This cannot be undone.`);
-    if (!confirm) return;
+    setPopup({
+  type: "confirm",
+  message: `Delete Version ${versionNumber}? This cannot be undone.`,
+  onConfirm: async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/version/${versionId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setProjectVersions((prev) => ({
+          ...prev,
+          [projectId]: prev[projectId].filter((v) => v.id !== versionId),
+        }));
+
+        setPopup({ type: "success", message: "Version deleted successfully" });
+      } else {
+        setPopup({ type: "error", message: "Delete failed: " + data.message });
+      }
+    } catch (err) {
+      console.error("Delete version error:", err);
+    }
+  },
+});
+return;
     try {
       const res = await fetch(`http://localhost:5000/api/version/${versionId}`, {
         method: "DELETE",
@@ -564,6 +624,55 @@ export function VersionControlPage() {
           </div>
         </div>
       )}
+      {popup && (
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 text-center">
+
+      {popup.type === "success" && (
+        <div className="text-green-600 font-semibold mb-2">Success</div>
+      )}
+
+      {popup.type === "error" && (
+        <div className="text-red-600 font-semibold mb-2">Error</div>
+      )}
+
+      {popup.type === "confirm" && (
+        <div className="text-yellow-600 font-semibold mb-2">Confirm</div>
+      )}
+
+      <p className="text-gray-700 text-sm mb-4">{popup.message}</p>
+
+      <div className="flex justify-center gap-3">
+        {popup.type === "confirm" ? (
+          <>
+            <button
+              onClick={() => setPopup(null)}
+              className="px-4 py-1.5 rounded bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                popup.onConfirm?.();
+                setPopup(null);
+              }}
+              className="px-4 py-1.5 rounded bg-indigo-600 text-black"
+            >
+              Yes
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => setPopup(null)}
+            className="px-4 py-1.5 rounded bg-indigo-600 text-black"
+          >
+            OK
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
     </div>
   );

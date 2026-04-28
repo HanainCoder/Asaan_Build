@@ -35,6 +35,10 @@ const [githubModal, setGithubModal] = useState<{ open: boolean; repoUrl?: string
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false); // New: saving state
+  const [popup, setPopup] = useState<{
+  type: "success" | "error" | null;
+  message: string;
+} | null>(null);
   const [code, setCode] = useState("");
   const [format, setFormat] = useState<"html" | "txt">("html");
   // const [promptInput, setPromptInput] = useState(prompt);
@@ -45,6 +49,7 @@ const [githubModal, setGithubModal] = useState<{ open: boolean; repoUrl?: string
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(
   projectId || null
 );
+
  useEffect(() => {
   const params = new URLSearchParams(window.location.search);
 
@@ -136,10 +141,15 @@ useEffect(() => {
       const data = await res.json();
 
       if (data.success) {
-        alert(`New version saved (v${data.version})`);
+setPopup({
+  type: "success",
+  message: `New version saved (v${data.version}) ✅`,
+});
       } else {
-        alert("Version save failed");
-      }
+setPopup({
+  type: "error",
+  message: "Version save failed",
+});      }
 
     } 
     // If it's new project (not saved yet)
@@ -158,14 +168,19 @@ useEffect(() => {
 
       if (data.success) {
         setCurrentProjectId(data.projectId); // important
-        alert("Project saved successfully!");
-      }
+setPopup({
+  type: "success",
+  message: "Project saved successfully! 🎉",
+});      }
 
     }
 
   } catch (err) {
     console.error(err);
-    alert("Error saving project.");
+    setPopup({
+      type: "error",
+      message: "Error saving project.",
+    });
   }
 
   setSaving(false);
@@ -622,7 +637,27 @@ if (data.success) {
     </div>
   </div>
 )}
+{popup && (
+  <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center">
 
+      <div className={`text-lg font-semibold mb-2 ${
+        popup.type === "success" ? "text-green-600" : "text-red-600"
+      }`}>
+        {popup.type === "success" ? "Success" : "Error"}
+      </div>
+
+      <p className="text-gray-700 text-sm mb-4">{popup.message}</p>
+
+      <button
+        onClick={() => setPopup(null)}
+        className="px-5 py-2 bg-indigo-600 text-black rounded-lg hover:bg-indigo-700"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
