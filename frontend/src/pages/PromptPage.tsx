@@ -17,6 +17,8 @@ export function PromptPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [voiceLang, setVoiceLang] = useState('en-US');
   const [voiceError, setVoiceError] = useState('');
+  const [blockedError, setBlockedError] = useState('');  //  ADD THIS
+
   const recognitionRef = useRef<any>(null);
 
   const examplePrompts = [
@@ -109,15 +111,37 @@ export function PromptPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt.trim() || isGenerating) return;
-    if (!user) return alert('You must be logged in!');
+  e.preventDefault();
+  if (!prompt.trim() || isGenerating) return;
+  if (!user) return alert('You must be logged in!');
 
-    setIsGenerating(true);
-    navigate(`/code/${Date.now()}`, {
-      state: { prompt, userId: user.id },
+  setBlockedError(''); // clear previous error
+
+  //  Check with backend before navigating
+  setIsGenerating(true);
+  try {
+    const checkRes = await fetch('http://localhost:5000/api/generateLandingStream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, checkOnly: true }),
     });
-  };
+
+    if (!checkRes.ok) {
+      const data = await checkRes.json();
+      if (data.error === 'blocked') {
+        setBlockedError(data.message);
+        setIsGenerating(false);
+        return; // stop here, don't navigate
+      }
+    }
+  } catch (err) {
+    // if check fails, still allow (don't block user for network errors)
+  }
+
+  navigate(`/code/${Date.now()}`, {
+    state: { prompt, userId: user.id },
+  });
+};
 
   const useExample = (example: string) => {
     setPrompt(example);
@@ -160,6 +184,16 @@ export function PromptPage() {
                     {voiceError}
                   </div>
                 )}
+                {blockedError && (
+  <div className="px-6 py-3 bg-red-50 border-t border-red-200 flex items-start gap-2">
+    <span className="text-red-500 text-lg">⚠️</span>
+    <div>
+      <p className="text-red-700 text-sm font-medium">یہ ویب سائٹ نہیں بنائی جا سکتی</p>
+      <p className="text-red-500 text-xs mt-0.5">{blockedError}</p>
+      <p className="text-red-400 text-xs">AsaanBuild only builds legal and positive websites.</p>
+    </div>
+  </div>
+)}
 
                 <div className="p-4 bg-gray-50 flex items-center justify-between gap-4 border-t">
 

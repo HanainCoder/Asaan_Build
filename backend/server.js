@@ -52,7 +52,70 @@ function authenticateToken(req, res, next) {
     next();
   });
 }
+// ============================================
+// CONTENT MODERATION BLOCKLIST
+// ============================================
+const BLOCKED_KEYWORDS = [
+  // English - Illegal/Criminal
+  'phishing', 'scam', 'fraud', 'fake login', 'fake bank', 'stolen goods',
+  'drug', 'cocaine', 'heroin', 'meth', 'weed sell', 'narcotics',
+  'weapon', 'gun shop illegal', 'bomb', 'explosives',
+  'hack', 'hacking', 'malware', 'ransomware', 'ddos', 'keylogger',
+  'money laundering', 'counterfeit', 'black market',
+  'terrorist', 'extremist', 'isis', 'al qaeda',
+  'porn', 'adult content', 'xxx', 'nude', 'explicit',
+  'harassment', 'blackmail', 'extortion', 'threaten',
+  'dark web', 'onion site', 'illegal marketplace',
 
+  // Urdu
+  // Urdu - Fraud/Scam
+'دھوکہ', 'دھوکہ دہی', 'فراڈ', 'جعلی', 'جعل سازی', 'چوری', 'لوٹ مار',
+'ٹھگی', 'ٹھگنا', 'دھوکہ باز', 'فریب', 'فریب کاری', 'چھل کپٹ',
+
+// Urdu - Hacking/Cyber
+'ہیک', 'ہیکنگ', 'سائبر حملہ', 'وائرس', 'میلویئر', 'پاس ورڈ چوری',
+'ڈیٹا چوری', 'اکاؤنٹ ہیک', 'نقلی ویب سائٹ', 'جھوٹی ویب سائٹ',
+
+// Urdu - Drugs
+'منشیات', 'نشہ', 'نشہ بیچنا', 'چرس', 'ہیروئن', 'افیون', 'کوکین',
+'سمیک', 'میتھ', 'نشہ آور', 'منشیات فروشی', 'نشہ فروش',
+
+// Urdu - Weapons
+'ہتھیار', 'غیر قانونی ہتھیار', 'بندوق', 'پستول', 'رائفل',
+'بم', 'بم بنانا', 'دھماکہ', 'دھماکہ خیز', 'گولہ بارود', 'کلاشنکوف',
+
+// Urdu - Adult/Explicit
+'فحش', 'فحاشی', 'عریاں', 'عریانی', 'بے حیائی', 'بے پردگی',
+'گندی ویب سائٹ', 'گندا مواد', 'فحش مواد', 'بالغ مواد',
+
+// Urdu - Harassment/Threats
+'ہراساں', 'ہراسانی', 'دھمکی', 'دھمکانا', 'بلیک میل', 'بلیک میلنگ',
+'ڈرانا', 'دھمکی دینا', 'تنگ کرنا', 'پریشان کرنا', 'تعاقب کرنا',
+
+// Urdu - Terrorism/Extremism  
+'دہشت گرد', 'دہشت گردی', 'انتہا پسند', 'انتہا پسندی', 'جہادی ویب سائٹ',
+'دہشت گرد تنظیم', 'خودکش حملہ', 'بم دھماکہ', 'فتنہ و فساد',
+
+// Urdu - General Illegal
+'غیر قانونی', 'غیر قانونی کاروبار', 'کالا بازار', 'اسمگلنگ',
+'منی لانڈرنگ', 'رشوت', 'کرپشن ویب سائٹ', 'جوا', 'سٹہ', 'قمار بازی',
+'جعلی دستاویز', 'جعلی شناختی کارڈ', 'جعلی پاسپورٹ',
+
+  // Roman Urdu
+  'dhoka', 'farad', 'jaali', 'jaali website', 'chori karo',
+  'hack karo', 'hack karna', 'hacking site', 'website hack',
+  'charas', 'nashe', 'nasha', 'chars bechna', 'nasha bechna',
+  'hathyar', 'bandooq', 'bomb banao', 'dhamaka',
+  'fahash', 'fuhsh', 'gandi site', 'sexy site', 'adult site',
+  'dhamki', 'blackmail karo', 'harass karo',
+  'illegal kaam', 'crime site', 'criminal website',
+  'dark web', 'dehshat gard',
+];
+
+function containsBlockedContent(prompt) {
+  const lowerPrompt = prompt.toLowerCase();
+  return BLOCKED_KEYWORDS.some(keyword => lowerPrompt.includes(keyword.toLowerCase()));
+}
 // Start Google Login
 app.get(
   "/api/auth/google",
@@ -243,7 +306,13 @@ async function createThumbnail(html, projectId) {
 app.post("/api/generateLandingStream", async (req, res) => {
   const { prompt  } = req.body;
   if (!prompt) return res.status(400).json({ error: "Prompt required" });
-  
+  //  CONTENT MODERATION CHECK
+  if (containsBlockedContent(prompt)) {
+    return res.status(400).json({
+      error: "blocked",
+      message: "آپ کی درخواست قبول نہیں کی جا سکتی۔ براہ کرم ایک مناسب ویب سائٹ کا آئیڈیا درج کریں۔"
+    });
+  }
 
   const fullPrompt = `
 You are an AI web developer. 
@@ -657,7 +726,13 @@ app.post("/api/project/:id/edit", async (req, res) => {
   if (!instruction) {
     return res.status(400).json({ success:false, message:"Instruction required"});
   }
-
+  // CONTENT MODERATION CHECK
+  if (containsBlockedContent(instruction)) {
+    return res.status(400).json({
+      error: "blocked",
+      message: "آپ کی ہدایت قبول نہیں کی جا سکتی۔ براہ کرم مناسب ہدایت درج کریں۔"
+    });
+  }
   try {
 
     // 1. GET EXISTING CODE
@@ -1040,6 +1115,13 @@ app.post("/api/generateFromTemplate", async (req, res) => {
 
   if (!templateId) {
     return res.status(400).json({ success: false, message: "templateId required" });
+  }
+  //  CONTENT MODERATION CHECK (on extra instructions only)
+  if (extraInstructions && containsBlockedContent(extraInstructions)) {
+    return res.status(400).json({
+      error: "blocked",
+      message: "آپ کی درخواست قبول نہیں کی جا سکتی۔ براہ کرم مناسب ہدایت درج کریں۔"
+    });
   }
 
   try {

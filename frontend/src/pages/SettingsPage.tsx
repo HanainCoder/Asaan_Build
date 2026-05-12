@@ -184,7 +184,7 @@ export function SettingsPage() {
 
             <div className="space-y-6">
 
-              {/* ══ PROFILE ══════════════════════════════════════ */}
+              {/* ══ PROFILE */}
               <div className="bg-white rounded-2xl p-6 border border-gray-200">
                 <div className="flex items-center gap-3 mb-6">
                   <User className="size-5 text-gray-600" />
