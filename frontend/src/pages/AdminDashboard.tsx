@@ -12,7 +12,12 @@ import {
   X,
 } from 'lucide-react';
 
+
+
 const API = 'http://localhost:5000';
+
+// 1. Add these states inside AdminDashboard()
+
 
 function StatCard({
   label,
@@ -84,6 +89,16 @@ export function AdminDashboard() {
 
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [popup, setPopup] = useState<{
+  type: 'success' | 'error';
+  message: string;
+} | null>(null);
+
+const [confirmModal, setConfirmModal] = useState<{
+  type: 'user' | 'project';
+  id: number;
+  message: string;
+} | null>(null);
 
   const [mobileMenu, setMobileMenu] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
@@ -163,27 +178,35 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
   }
 }
 
-  async function deleteUser(id: number) {
-    if (!confirm('Delete this user and all their data?')) return;
-
-    const res = await fetch(`${API}/api/admin/user/${id}`, {
-      method: 'DELETE',
-      headers,
-    });
-
-
-    const data = await res.json();
-
-    if (data.success) {
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-    }
-  }
+  // 2. Replace deleteUser() with this
+async function deleteUser(id: number) {
+  setConfirmModal({
+    type: 'user',
+    id,
+    message: 'Delete this user and all their data?',
+  });
+}
   
 
-  async function deleteProject(id: number) {
-    if (!confirm('Delete this project?')) return;
+  // 3. Replace deleteProject() with this
+async function deleteProject(id: number) {
+  setConfirmModal({
+    type: 'project',
+    id,
+    message: 'Delete this project?',
+  });
+}
+// 4. Add this new function
+async function handleConfirmDelete() {
+  if (!confirmModal) return;
 
-    const res = await fetch(`${API}/api/admin/project/${id}`, {
+  try {
+    const endpoint =
+      confirmModal.type === 'user'
+        ? `${API}/api/admin/user/${confirmModal.id}`
+        : `${API}/api/admin/project/${confirmModal.id}`;
+
+    const res = await fetch(endpoint, {
       method: 'DELETE',
       headers,
     });
@@ -191,9 +214,38 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
     const data = await res.json();
 
     if (data.success) {
-      setProjects((prev) => prev.filter((p) => p.id !== id));
+      if (confirmModal.type === 'user') {
+        setUsers((prev) =>
+          prev.filter((u) => u.id !== confirmModal.id)
+        );
+      } else {
+        setProjects((prev) =>
+          prev.filter((p) => p.id !== confirmModal.id)
+        );
+      }
+
+      setPopup({
+        type: 'success',
+        message:
+          confirmModal.type === 'user'
+            ? 'User deleted successfully.'
+            : 'Project deleted successfully.',
+      });
+    } else {
+      setPopup({
+        type: 'error',
+        message: data.message || 'Delete failed.',
+      });
     }
+  } catch (error) {
+    setPopup({
+      type: 'error',
+      message: 'Server error. Please try again.',
+    });
   }
+
+  setConfirmModal(null);
+}
 
   const filteredUsers = users.filter(
     (u) =>
@@ -469,7 +521,19 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
           {users.slice(0, 6).map((u) => (
             <div
               key={u.id}
-              className="flex items-center justify-between p-4 rounded-2xl hover:bg-blue-50/40 transition-all"
+              className="group
+          flex items-center justify-between
+          p-4
+          rounded-2xl
+          border border-transparent
+          bg-white/60
+          cursor-pointer
+          hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50
+          hover:border-blue-100
+          hover:shadow-lg
+          hover:-translate-y-1
+          hover:scale-[1.01]
+          transition-all duration-300 ease-out"
             >
               <div className="min-w-0">
                 <p className="font-medium text-gray-700 truncate">
@@ -526,7 +590,18 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
           {projects.slice(0, 6).map((p) => (
             <div
               key={p.id}
-              className="p-4 rounded-2xl hover:bg-purple-50/40 transition-all"
+              className="group
+  p-4
+  rounded-2xl
+  border border-transparent
+  bg-white/60
+  cursor-pointer
+  hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50
+  hover:border-purple-100
+  hover:shadow-lg
+  hover:-translate-y-1
+  hover:scale-[1.01]
+  transition-all duration-300 ease-out"
             >
               <p className="font-medium text-gray-700 truncate">
                 {p.project_name}
@@ -564,6 +639,7 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
     </div>
 
   </div>
+  
 )}
 
         {/* USERS */}
@@ -873,7 +949,7 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
 
               <button
                 onClick={() => sendReply(m.id)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-shadow whitespace-nowrap"
               >
                 Send
               </button>
@@ -889,7 +965,65 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
 )}
 
       </div>
+{/* 5. Add this CONFIRMATION MODAL near the bottom of your return(), before the final closing </div> */}
 
+{confirmModal && (
+  <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-gray-100">
+      <h2 className="text-xl font-bold text-gray-800 mb-2">
+        Confirm Delete
+      </h2>
+
+      <p className="text-gray-600 text-sm mb-6">
+        {confirmModal.message}
+      </p>
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => setConfirmModal(null)}
+          className="flex-1 px-5 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleConfirmDelete}
+          className="flex-1 px-5 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg transition-all"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+{/* 6. Keep your existing SUCCESS / ERROR POPUP */}
+
+{popup && (
+  <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center">
+      <div
+        className={`text-lg font-semibold mb-2 ${
+          popup.type === 'success'
+            ? 'text-green-600'
+            : 'text-red-600'
+        }`}
+      >
+        {popup.type === 'success' ? 'Success' : 'Error'}
+      </div>
+
+      <p className="text-gray-700 text-sm mb-4">
+        {popup.message}
+      </p>
+
+      <button
+        onClick={() => setPopup(null)}
+        className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
