@@ -1554,6 +1554,162 @@ app.get("/api/version/stats/:userId", authenticateToken, async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+// ============================================
+// ADMIN AUTH
+// ============================================
+
+// Admin Login
+app.post("/api/admin/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM admins WHERE email = $1",
+      [email.trim().toLowerCase()]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const admin = result.rows[0];
+
+    // Direct compare — no bcrypt
+    if (password !== admin.password) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: admin.id, email: admin.email, name: admin.name, role: 'admin' },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      admin: { id: admin.id, name: admin.name, email: admin.email }
+    });
+
+  } catch (err) {
+    console.error("ADMIN LOGIN ERROR:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+// Admin JWT Middleware
+function authenticateAdmin(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) return res.status(401).json({ message: "No token" });
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ message: "Invalid token" });
+    if (decoded.role !== 'admin') return res.status(403).json({ message: "Admin access only" });
+    req.admin = decoded;
+    next();
+  });
+}
+// ============================================
+// ADMIN DASHBOARD ROUTES
+// ============================================
+
+// Stats
+app.get("/api/admin/stats", authenticateAdmin, async (req, res) => {
+  try {
+    const totalUsers     = await pool.query("SELECT COUNT(*) FROM users");
+    const totalProjects  = await pool.query("SELECT COUNT(*) FROM generated_projects");
+    const totalVersions  = await pool.query("SELECT COUNT(*) FROM project_versions");
+    const todayUsers     = await pool.query("SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURRENT_DATE");
+    const todayProjects  = await pool.query("SELECT COUNT(*) FROM generated_projects WHERE DATE(created_at) = CURRENT_DATE");
+    const totalTemplates = await pool.query("SELECT COUNT(*) FROM templates WHERE is_active = TRUE");
+
+    res.json({
+      success: true,
+      totalUsers:     Number(totalUsers.rows[0].count),
+      totalProjects:  Number(totalProjects.rows[0].count),
+      totalVersions:  Number(totalVersions.rows[0].count),
+      todayUsers:     Number(todayUsers.rows[0].count),
+      todayProjects:  Number(todayProjects.rows[0].count),
+      totalTemplates: Number(totalTemplates.rows[0].count),
+    });
+  } catch (err) {
+    console.error("ADMIN STATS ERROR:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// All Users
+app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT u.id, u.name, u.email, u.provider, u.github_username, u.created_at,
+        COUNT(gp.id) AS total_projects
+      FROM users u
+      LEFT JOIN generated_projects gp ON gp.user_id = u.id
+      GROUP BY u.id
+      ORDER BY u.created_at DESC
+    `);
+    res.json({ success: true, users: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// All Projects
+app.get("/api/admin/projects", authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT gp.id, gp.project_name, gp.prompt, gp.created_at,
+        u.name AS user_name, u.email AS user_email,
+        COUNT(pv.id) AS total_versions
+      FROM generated_projects gp
+      JOIN users u ON gp.user_id = u.id
+      LEFT JOIN project_versions pv ON pv.project_id = gp.id
+      GROUP BY gp.id, u.name, u.email
+      ORDER BY gp.created_at DESC
+    `);
+    res.json({ success: true, projects: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// Activity (last 14 days)
+app.get("/api/admin/activity", authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT DATE(created_at) AS date, COUNT(*) AS count
+      FROM generated_projects
+      WHERE created_at >= NOW() - INTERVAL '14 days'
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `);
+    res.json({ success: true, activity: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// Delete User
+app.delete("/api/admin/user/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await pool.query("DELETE FROM users WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// Delete Project
+app.delete("/api/admin/project/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await pool.query("DELETE FROM generated_projects WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);

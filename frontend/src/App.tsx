@@ -18,6 +18,8 @@ import { VersionControlPage } from './pages/VersionControlPage';
 import { AuthSuccess } from "./pages/AuthSuccess";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PromptHistoryPage } from './pages/PromptHistoryPage';
+import { AdminLoginPage }   from './pages/AdminLoginPage';
+import { AdminDashboard }   from './pages/AdminDashboard';
 
 
 
@@ -136,6 +138,10 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route 
+      path="/admin"       
+       element={<AdminLoginPage />} />
+<Route path="/admin/dashboard" element={<AdminDashboard />} />
     </Routes>
   );
 }
