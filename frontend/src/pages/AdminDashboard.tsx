@@ -73,9 +73,9 @@ export function AdminDashboard() {
   const adminToken = localStorage.getItem('adminToken');
   const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || '{}');
 
-  const [tab, setTab] = useState<'overview' | 'users' | 'projects'>(
-    'overview'
-  );
+  const [tab, setTab] = useState<'overview' | 'users' | 'projects' | 'support'>(
+  'overview'
+);
 
   const [stats, setStats] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -86,6 +86,8 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [messages, setMessages] = useState<any[]>([]);
+const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
 
   const headers = {
     'Content-Type': 'application/json',
@@ -105,11 +107,12 @@ export function AdminDashboard() {
     setLoading(true);
 
     try {
-      const [s, u, p, a] = await Promise.all([
+      const [s, u, p, a,m] = await Promise.all([
         fetch(`${API}/api/admin/stats`, { headers }).then((r) => r.json()),
         fetch(`${API}/api/admin/users`, { headers }).then((r) => r.json()),
         fetch(`${API}/api/admin/projects`, { headers }).then((r) => r.json()),
         fetch(`${API}/api/admin/activity`, { headers }).then((r) => r.json()),
+          fetch(`${API}/api/admin/support-messages`, { headers }).then((r) => r.json()), 
       ]);
 
       if (!s.success) {
@@ -121,6 +124,7 @@ export function AdminDashboard() {
       setUsers(u.users || []);
       setProjects(p.projects || []);
       setActivity(a.activity || []);
+      setMessages(m.messages || []);
     } catch {
       navigate('/admin');
     }
@@ -134,6 +138,31 @@ export function AdminDashboard() {
     navigate('/admin');
   }
 
+  async function sendReply(id: number) {
+  const reply = replyText[id];
+  if (!reply?.trim()) return;
+
+  const res = await fetch(`${API}/api/admin/support/${id}/reply`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ reply }),
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === id
+          ? { ...m, admin_reply: reply, status: 'resolved' }
+          : m
+      )
+    );
+
+    setReplyText((prev) => ({ ...prev, [id]: '' }));
+  }
+}
+
   async function deleteUser(id: number) {
     if (!confirm('Delete this user and all their data?')) return;
 
@@ -142,12 +171,14 @@ export function AdminDashboard() {
       headers,
     });
 
+
     const data = await res.json();
 
     if (data.success) {
       setUsers((prev) => prev.filter((u) => u.id !== id));
     }
   }
+  
 
   async function deleteProject(id: number) {
     if (!confirm('Delete this project?')) return;
@@ -224,7 +255,7 @@ export function AdminDashboard() {
             {/* DESKTOP NAV */}
             <div className="hidden md:flex items-center gap-3">
 
-              {(['overview', 'users', 'projects'] as const).map((t) => (
+              {(['overview', 'users', 'projects',  'support'] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => {
@@ -241,6 +272,7 @@ export function AdminDashboard() {
                   {t === 'overview' && 'Overview'}
                   {t === 'users' && 'Users'}
                   {t === 'projects' && 'Projects'}
+                  {t === 'support' && 'Support'}
                 </button>
               ))}
 
@@ -784,6 +816,82 @@ export function AdminDashboard() {
 
           </div>
         )}
+
+        {/* support */}
+        {tab === 'support' && (
+  <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 shadow-sm overflow-hidden">
+
+    <div className="p-6 border-b">
+      <h2 className="text-xl font-semibold">Support Messages</h2>
+      <p className="text-sm text-gray-400">
+        {messages.length} messages from users
+      </p>
+    </div>
+
+    <div className="divide-y">
+
+      {messages.map((m) => (
+        <div key={m.id} className="p-5 space-y-3">
+
+          {/* USER INFO */}
+          <div className="flex justify-between">
+            <div>
+              <p className="font-medium text-gray-700">{m.name}</p>
+              <p className="text-sm text-gray-400">{m.email}</p>
+            </div>
+
+            <span
+              className={`text-xs px-3 py-1 rounded-full
+              ${m.status === 'resolved'
+                ? 'bg-green-50 text-green-600'
+                : 'bg-yellow-50 text-yellow-600'
+              }`}
+            >
+              {m.status}
+            </span>
+          </div>
+
+          {/* MESSAGE */}
+          <p className="bg-gray-50 p-3 rounded-xl text-gray-600">
+            {m.message}
+          </p>
+
+          {/* REPLY */}
+          {m.admin_reply ? (
+            <div className="bg-blue-50 p-3 rounded-xl text-blue-700 text-sm">
+              <b>Reply:</b> {m.admin_reply}
+            </div>
+          ) : (
+            <div className="flex gap-2">
+
+              <input
+                value={replyText[m.id] || ''}
+                onChange={(e) =>
+                  setReplyText({
+                    ...replyText,
+                    [m.id]: e.target.value,
+                  })
+                }
+                placeholder="Write reply..."
+                className="flex-1 px-4 py-2 border rounded-xl text-sm"
+              />
+
+              <button
+                onClick={() => sendReply(m.id)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm"
+              >
+                Send
+              </button>
+
+            </div>
+          )}
+
+        </div>
+      ))}
+
+    </div>
+  </div>
+)}
 
       </div>
 

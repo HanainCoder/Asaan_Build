@@ -24,6 +24,7 @@ export function SupportPage() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [search, setSearch] = useState("");
 const [successModal, setSuccessModal] = useState(false);
+const [messages, setMessages] = useState([]);
 
   const faqs = [
   {
@@ -88,11 +89,35 @@ const DEFAULT_STEPS = [
 });
 
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage('');
-    setSuccessModal(true);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch("http://localhost:5000/api/support/message", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        message: message,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      setMessage("");        // clear textarea
+      setSuccessModal(true); // show popup
+    } else {
+      alert(data.message || "Failed to send message");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  }
+};
   const completed = steps.filter((s: OnboardingStep) => s.done).length;
   const progress = (completed / steps.length) * 100;
 
@@ -103,6 +128,21 @@ const DEFAULT_STEPS = [
   setSteps(updated);
   localStorage.setItem("onboardingSteps", JSON.stringify(updated));
 };
+useEffect(() => {
+  fetch("http://localhost:5000/api/support/messages", {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        setMessages(data.messages);
+      }
+    })
+    .catch((err) => console.error(err));
+}, []);
+
   //for  Welcome
   useEffect(() => {
   const onboarded = localStorage.getItem("onboarded");
@@ -326,6 +366,7 @@ const DEFAULT_STEPS = [
                   <Send className="size-5" />
                 </button>
               </form>
+              
               <div className="mt-6 pt-6 border-t border-blue-400">
                 <p className="text-sm text-blue-100 mb-2">Other ways to reach us:</p>
                 <p className="text-sm">Email: support@asaanbuild.com</p>
@@ -333,6 +374,43 @@ const DEFAULT_STEPS = [
               </div>
             </div>
           </div>
+          {/* Support Messages List */}
+<div className="mt-8 bg-white rounded-2xl p-6 border border-gray-200">
+  <h2 className="font-semibold mb-4">My Messages</h2>
+
+  <div className="space-y-4">
+    {messages.length === 0 && (
+      <p className="text-gray-400 text-sm">No messages yet</p>
+    )}
+
+    {messages.map((m: any) => (
+      <div key={m.id} className="border rounded-xl p-4">
+
+        {/* USER MESSAGE */}
+        <p className="text-gray-700">
+          <b>You:</b> {m.message}
+        </p>
+
+        {/* ADMIN REPLY */}
+        {m.admin_reply ? (
+          <div className="mt-3 p-3 bg-green-50 text-green-700 rounded-lg">
+            <b>Admin Reply:</b> {m.admin_reply}
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-gray-400">
+            Waiting for admin reply...
+          </p>
+        )}
+
+        {/* STATUS */}
+        <p className="text-xs text-gray-400 mt-2">
+          Status: {m.status}
+        </p>
+
+      </div>
+    ))}
+  </div>
+</div>
         </main>
       </div>
       {successModal && (
@@ -352,6 +430,8 @@ const DEFAULT_STEPS = [
     </div>
   </div>
 )}
+
+
     </div>
   );
 }

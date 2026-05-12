@@ -1710,6 +1710,139 @@ app.delete("/api/admin/project/:id", authenticateAdmin, async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+//save support messages to database
+app.post("/api/support/message", authenticateToken, async (req, res) => {
+  const { message } = req.body;
+
+  if (!message || !message.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "Message is required"
+    });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO support_messages (user_id, message)
+       VALUES ($1, $2)`,
+      [req.user.id, message.trim()]
+    );
+
+    res.json({
+      success: true,
+      message: "Support message saved"
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+});
+// GET user support messages + admin reply
+app.get("/api/support/messages", authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        id,
+        message,
+        admin_reply,
+        status,
+        created_at,
+        replied_at
+      FROM support_messages
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      `,
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      messages: result.rows,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+});
+//get all messages for admin dashboard
+app.get("/api/admin/support-messages", authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        sm.id,
+        sm.message,
+        sm.status,
+        sm.created_at,
+        u.name,
+        u.email
+      FROM support_messages sm
+      JOIN users u ON sm.user_id = u.id
+      ORDER BY sm.created_at DESC
+    `);
+
+    res.json({
+      success: true,
+      messages: result.rows
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+});
+// admin reply to support message
+app.put("/api/admin/support/:id/reply", authenticateAdmin, async (req, res) => {
+  const { reply } = req.body;
+
+  if (!reply || !reply.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "Reply is required"
+    });
+  }
+
+  try {
+    await pool.query(
+      `
+      UPDATE support_messages
+      SET 
+        admin_reply = $1,
+        status = 'resolved',
+        replied_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      `,
+      [reply.trim(), req.params.id]
+    );
+
+    res.json({
+      success: true,
+      message: "Reply sent"
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false
+    });
+  }
+});
+//mark as resolved
+app.put("/api/admin/support/:id/resolve", authenticateAdmin, async (req, res) => {
+  try {
+    await pool.query(
+      `UPDATE support_messages SET status='resolved' WHERE id=$1`,
+      [req.params.id]
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
 // START SERVER
 app.listen(process.env.PORT, () => {
   console.log("Server started on port " + process.env.PORT);
