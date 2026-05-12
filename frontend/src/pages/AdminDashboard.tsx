@@ -229,7 +229,7 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
       {/* NAVBAR */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200">
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 m-4">
 
           <div className="h-20 flex items-center justify-between">
 
@@ -242,7 +242,7 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
 
               <div>
                 <h1 className="font-semibold text-gray-800 text-lg">
-                  AsaanBuild Admin
+                  AsaanBuild 
                 </h1>
 
                 <p className="text-xs text-gray-400">
@@ -399,177 +399,172 @@ const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
 
         {/* OVERVIEW */}
         {tab === 'overview' && stats && (
-          <div className="space-y-8">
+  <div className="grid lg:grid-cols-3 gap-6">
 
-            {/* STATS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-5">
+    {/* LEFT SIDE (2/3 width) */}
+    <div className="lg:col-span-2 space-y-6">
 
-              <StatCard
-                label="Total Users"
-                value={stats.totalUsers}
-                today={stats.todayUsers}
-                color="text-blue-600"
-                icon={Users}
-              />
+      {/* STATS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
 
-              <StatCard
-                label="Total Projects"
-                value={stats.totalProjects}
-                today={stats.todayProjects}
-                color="text-purple-600"
-                icon={FolderKanban}
-              />
+        <StatCard
+          label="Total Users"
+          value={stats.totalUsers}
+          today={stats.todayUsers}
+          color="text-blue-600"
+          icon={Users}
+        />
 
-              <StatCard
-                label="Total Versions"
-                value={stats.totalVersions}
-                color="text-green-600"
-                icon={Layers3}
-              />
+        <StatCard
+          label="Total Projects"
+          value={stats.totalProjects}
+          today={stats.todayProjects}
+          color="text-purple-600"
+          icon={FolderKanban}
+        />
 
-              <StatCard
-                label="Templates"
-                value={stats.totalTemplates}
-                color="text-amber-600"
-                icon={Sparkles}
-              />
+        <StatCard
+          label="Total Versions"
+          value={stats.totalVersions}
+          color="text-green-600"
+          icon={Layers3}
+        />
 
-              <StatCard
-                label="New Users Today"
-                value={stats.todayUsers}
-                color="text-cyan-600"
-                icon={Users}
-              />
+        <StatCard
+          label="Templates"
+          value={stats.totalTemplates}
+          color="text-amber-600"
+          icon={Sparkles}
+        />
 
-              <StatCard
-                label="Projects Today"
-                value={stats.todayProjects}
-                color="text-pink-600"
-                icon={Activity}
-              />
+        <StatCard
+          label="New Users Today"
+          value={stats.todayUsers}
+          color="text-cyan-600"
+          icon={Users}
+        />
 
-            </div>
+        <StatCard
+          label="Projects Today"
+          value={stats.todayProjects}
+          color="text-pink-600"
+          icon={Activity}
+        />
 
-            {/* RECENT */}
-            <div className="grid lg:grid-cols-2 gap-6">
+      </div>
 
-              {/* USERS */}
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 p-6 shadow-sm hover:shadow-xl transition-all">
+      {/* RECENT USERS (LEFT) */}
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 p-6 shadow-sm hover:shadow-xl transition-all">
 
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    Recent Users
-                  </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Recent Users
+          </h2>
+          <span className="text-sm text-gray-400">
+            {users.length} users
+          </span>
+        </div>
 
-                  <span className="text-sm text-gray-400">
-                    {users.length} users
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-
-                  {users.slice(0, 6).map((u) => (
-                    <div
-                      key={u.id}
-                      className="flex items-center justify-between p-4 rounded-2xl hover:bg-blue-50/40 transition-all"
-                    >
-
-                      <div className="min-w-0">
-
-                        <p className="font-medium text-gray-700 truncate">
-                          {u.name}
-                        </p>
-
-                        <p className="text-sm text-gray-400 truncate">
-                          {u.email}
-                        </p>
-
-                      </div>
-
-                      <div className="text-right ml-3">
-
-                        <span
-                          className={`text-xs px-3 py-1 rounded-full font-medium
-                          ${
-                            u.provider === 'google'
-                              ? 'bg-red-50 text-red-600'
-                              : u.provider === 'github'
-                              ? 'bg-gray-100 text-gray-700'
-                              : 'bg-blue-50 text-blue-600'
-                          }`}
-                        >
-                          {u.provider || 'Email'}
-                        </span>
-
-                        <p className="text-xs text-gray-400 mt-1">
-                          {u.total_projects} projects
-                        </p>
-
-                      </div>
-
-                    </div>
-                  ))}
-
-                </div>
-
+        <div className="space-y-3">
+          {users.slice(0, 6).map((u) => (
+            <div
+              key={u.id}
+              className="flex items-center justify-between p-4 rounded-2xl hover:bg-blue-50/40 transition-all"
+            >
+              <div className="min-w-0">
+                <p className="font-medium text-gray-700 truncate">
+                  {u.name}
+                </p>
+                <p className="text-sm text-gray-400 truncate">
+                  {u.email}
+                </p>
               </div>
 
-              {/* PROJECTS */}
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 p-6 shadow-sm hover:shadow-xl transition-all">
+              <div className="text-right ml-3">
+                <span
+                  className={`text-xs px-3 py-1 rounded-full font-medium
+                  ${
+                    u.provider === 'google'
+                      ? 'bg-red-50 text-red-600'
+                      : u.provider === 'github'
+                      ? 'bg-gray-100 text-gray-700'
+                      : 'bg-blue-50 text-blue-600'
+                  }`}
+                >
+                  {u.provider || 'Email'}
+                </span>
 
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    Recent Projects
-                  </h2>
-
-                  <span className="text-sm text-gray-400">
-                    {projects.length} projects
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-
-                  {projects.slice(0, 6).map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between p-4 rounded-2xl hover:bg-purple-50/40 transition-all"
-                    >
-
-                      <div className="flex-1 min-w-0 mr-3">
-
-                        <p className="font-medium text-gray-700 truncate">
-                          {p.project_name}
-                        </p>
-
-                        <p className="text-sm text-gray-400">
-                          {p.user_name}
-                        </p>
-
-                      </div>
-
-                      <div className="text-right shrink-0">
-
-                        <p className="text-sm text-purple-600 font-medium">
-                          {p.total_versions} versions
-                        </p>
-
-                        <p className="text-xs text-gray-400">
-                          {new Date(p.created_at).toLocaleDateString()}
-                        </p>
-
-                      </div>
-
-                    </div>
-                  ))}
-
-                </div>
-
+                <p className="text-xs text-gray-400 mt-1">
+                  {u.total_projects} projects
+                </p>
               </div>
-
             </div>
+          ))}
+        </div>
 
-          </div>
-        )}
+      </div>
+
+    </div>
+
+    {/* RIGHT SIDE (1/3 width) */}
+    <div className="space-y-6">
+
+      {/* RECENT PROJECTS */}
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/50 p-6 shadow-sm hover:shadow-xl transition-all">
+
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Recent Projects
+          </h2>
+
+          <span className="text-sm text-gray-400">
+            {projects.length} projects
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {projects.slice(0, 6).map((p) => (
+            <div
+              key={p.id}
+              className="p-4 rounded-2xl hover:bg-purple-50/40 transition-all"
+            >
+              <p className="font-medium text-gray-700 truncate">
+                {p.project_name}
+              </p>
+
+              <p className="text-sm text-gray-400">
+                {p.user_name}
+              </p>
+
+              <div className="flex justify-between mt-2 text-xs text-gray-400">
+                <span>{p.total_versions} versions</span>
+                <span>
+                  {new Date(p.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+      </div>
+
+      {/* OPTIONAL EXTRA BOX */}
+      <div className="bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-3xl p-6 shadow-lg">
+
+        <h3 className="text-lg font-semibold mb-2">
+          System Insights
+        </h3>
+
+        <p className="text-sm text-blue-100">
+          Your platform is performing well. Keep monitoring user growth and project activity.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
 
         {/* USERS */}
         {tab === 'users' && (
